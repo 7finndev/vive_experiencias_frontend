@@ -35,7 +35,7 @@ class PublicLandingScreen extends StatelessWidget {
               leading: const Icon(Icons.android, color: Colors.green),
               title: const Text('Descargar App (Android)', style: TextStyle(color: Colors.white)),
               onTap: () async {
-                final url = Uri.parse('https://vivetorredelmar.7finn.es/vive_experiencias.apk');
+                final url = Uri.parse('https://vivexperiencias.7finn.es/vive_experiencias.apk');
                 if (await canLaunchUrl(url)) {
                   await launchUrl(url, mode: LaunchMode.externalApplication);
                 }
