@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
 
 // Importamos el modelo de evento para tipado fuerte
-import 'package:torre_del_mar_app/features/home/data/models/event_model.dart';
+import 'package:vive_core/features/home/data/models/event_model.dart';
 
 class AdminWinnerCheckScreen extends StatefulWidget {
   const AdminWinnerCheckScreen({super.key});
@@ -378,7 +379,7 @@ class _SimpleScannerPageState extends State<_SimpleScannerPage> {
               try {
                  _cameraController.switchCamera();
               } catch (e) {
-                 print("Error cambiando cámara: $e");
+                 Logger.error("Error cambiando cámara: $e", "ADMIN_WINNER_CHECK_SCREEN");
               }
             },
           ),

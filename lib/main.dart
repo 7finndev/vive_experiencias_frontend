@@ -8,22 +8,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart'; // <--- NUEVO IMPORT
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 // --- IMPORTACIONES FIREBASE ---
 //import 'package:firebase_core/firebase_core.dart';
 //import 'package:firebase_messaging/firebase_messaging.dart';
 // -----------------------------
 
-import 'package:torre_del_mar_app/core/local_storage/local_db_service.dart';
-import 'package:torre_del_mar_app/core/router/app_router.dart'; // <--- NUEVO IMPORT (Para rootNavigatorKey)
-import 'package:torre_del_mar_app/core/utils/analytics_service.dart';
+import 'package:vive_core/core/local_storage/local_db_service.dart';
+import 'package:vive_core/core/router/app_router.dart'; // <--- NUEVO IMPORT (Para rootNavigatorKey)
+import 'package:vive_core/core/utils/analytics_service.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  usePathUrlStrategy(); // <--- ¡ESTA ES LA MAGIA QUE QUITA EL #!
 
   // 1. Cargar variables de entorno
   await dotenv.load(fileName: '.env');
@@ -43,7 +48,7 @@ void main() async {
       anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
     );
   } catch (e) {
-    print("⚠️ Error inicializando Supabase (Posible token caducado): $e");
+    Logger.error("⚠️ Error inicializando Supabase (Posible token caducado): $e", "MAIN");
   }
   
   // 🔥 BLOQUE NUEVO: ESCUCHA DE RECUPERACIÓN DE CONTRASEÑA 🔥
@@ -52,7 +57,7 @@ void main() async {
     final event = data.event;
 
     if (event == AuthChangeEvent.passwordRecovery) {
-      print("🔑 Evento de recuperación de contraseña detectado!");
+      Logger.info("🔑 Evento de recuperación de contraseña detectado!", "MAIN");
 
       // Usamos la llave maestra (que hicimos pública en app_router.dart)
       // para navegar sin necesidad de contexto local.
@@ -76,7 +81,7 @@ void main() async {
       await Firebase.initializeApp();
       // ... (Resto de tu código Firebase comentado) ...
     } catch (e) {
-      print("❌ ERROR FIREBASE: $e");
+      Logger.error("❌ ERROR FIREBASE: $e", "MAIN");
     }
   }
   */
@@ -99,7 +104,7 @@ void main() async {
   }
 
   //.-Iniciamos el 'Tracking' de los dispositivos:
-  print("📊 Iniciando registro de dispositivo...");
+  Logger.info("📊 Iniciando registro de dispositivo...", "MAIN");
   await AnalyticsService.trackDeviceStart(localDb);
 
   runApp(const ProviderScope(child: MyApp()));
@@ -115,29 +120,61 @@ Future<void> _saveTokenToSupabase(String token) async {
         .from('profiles')
         .update({'fcm_token': token})
         .eq('id', userId);
-    print("💾 Token FCM guardado: $userId");
+    Logger.info("💾 Token FCM guardado: $userId", "MAIN");
   } catch (e) {
-    print("⚠️ Error guardando token: $e");
+    Logger.error("⚠️ Error guardando token: $e", "MAIN");
   }
 }
 
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
+  // Función ultra-segura para convertir colores Hex
+  Color _getColorFromHex(String hexColor) {
+    try {
+      hexColor = hexColor.toUpperCase().replaceAll("#", "");
+      if (hexColor.length == 6) {
+        hexColor = "FF$hexColor"; // Añadir opacidad si falta
+      }
+      return Color(int.parse(hexColor, radix: 16));
+    } catch (e) {
+      Logger.error("⚠️ Error parseando color: $hexColor. Usando color por defecto.", "MAIN");
+      return Colors.orange; // Color seguro en caso de fallo
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
 
+    // 1. Leemos los valores del .env
+    final appName = dotenv.env['APP_NAME'] ?? 'Vive App';
+    final colorString = dotenv.env['PRIMARY_COLOR'] ?? '#FF9800';
+    
+    // 2. Usamos nuestra nueva función segura
+    final seedColor = _getColorFromHex(colorString);
+
     return MaterialApp.router(
-      title: 'Vive Torre del Mar',
+      title: appName,
       debugShowCheckedModeBanner: false,
       routerConfig: router,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       scrollBehavior: AppScrollBehavior(),
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
+        colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
         useMaterial3: true,
       ),
+      // 👇 BLOQUE NUEVO: IDIOMAS PARA EL CALENDARIO 👇
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('es', 'ES'), // Español (España)
+        Locale('en', 'US'), // Inglés (Fallback)
+      ],
+      // 👆 HASTA AQUÍ 👆
     );
   }
 }

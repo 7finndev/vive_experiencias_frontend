@@ -1,10 +1,10 @@
-// Archivo: lib/core/utils/image_picker_widget.dart
 import 'dart:io';
 import 'package:flutter/foundation.dart'; // Para kIsWeb
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mime/mime.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
 
 class ImagePickerWidget extends StatefulWidget {
   final String? initialUrl;
@@ -91,7 +91,7 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
       widget.onImageUploaded(publicUrl);
 
     } catch (e) {
-      debugPrint("Error subiendo: $e");
+      Logger.error("Error subiendo: $e", "IMAGE_PICKER_WIDGET");
       setState(() => _isUploading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -145,7 +145,7 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
                               child: Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.6),
+                                  color: Colors.black.withValues(alpha: 0.6),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(Icons.edit, color: Colors.white, size: 18),

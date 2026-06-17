@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
-import 'package:torre_del_mar_app/features/home/data/models/ranking_item_model.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/features/home/data/models/ranking_item_model.dart';
 
 class HomeRankingCarousel extends StatelessWidget {
   final AsyncValue<List<RankingItem>> rankingAsync;
@@ -22,7 +23,7 @@ class HomeRankingCarousel extends StatelessWidget {
       height: 160, // Altura de la tarjeta
       child: rankingAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_,__) => const SizedBox(), // Si falla, ocultamos la sección
+        error: (_,_) => const SizedBox(), // Si falla, ocultamos la sección
         data: (ranking) {
           if (ranking.isEmpty) return const Center(child: Text("¡Vota para destacar aquí!"));
 
@@ -33,7 +34,7 @@ class HomeRankingCarousel extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 4), // Margen lateral
             itemCount: top5.length,
-            separatorBuilder: (_,__) => const SizedBox(width: 12),
+            separatorBuilder: (_,_) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final item = top5[index];
               return _RankingCard(
@@ -67,7 +68,7 @@ class HomeRankingCarousel extends StatelessWidget {
         return; // ¡Éxito! Salimos.
       } catch (_) {
         // Si falla, no hacemos nada y pasamos al Plan B
-        print("⚠️ El bar ID $establishmentId no está en la lista local. Buscando en nube...");
+        Logger.warning("⚠️ El bar ID $establishmentId no está en la lista local. Buscando en nube...", "HOME_RANKING_CAROUSEL");
       }
     }
 
@@ -92,7 +93,7 @@ class HomeRankingCarousel extends StatelessWidget {
       }
       
     } catch (e) {
-      print("Error recuperando bar: $e");
+      Logger.error("Error recuperando bar: $e", "HOME_RANKING_CAROUSEL");
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Error: No se pudo cargar la información del local"), backgroundColor: Colors.red)
@@ -135,7 +136,7 @@ class _RankingCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0,4))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0,4))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,8 +153,8 @@ class _RankingCard extends StatelessWidget {
                       // Asegúrate de que tu RankingItem tiene este campo mapeado desde SQL
                       imageUrl: item.imageUrl ?? '', // Usamos la de la tapa o bar según SQL
                       fit: BoxFit.cover,
-                      placeholder: (_,__) => Container(color: Colors.grey[200]),
-                      errorWidget: (_,__,___) => const Icon(Icons.store),
+                      placeholder: (_,_) => Container(color: Colors.grey[200]),
+                      errorWidget: (_,_,_) => const Icon(Icons.store),
                     ),
                   ),
                   // Badge de Posición

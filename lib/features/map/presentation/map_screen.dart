@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart'; 
-import 'package:latlong2/latlong.dart'; 
+import 'package:latlong2/latlong.dart';
+import 'package:vive_core/core/utils/geocoding_helper.dart';
+import 'package:vive_core/core/utils/logger_service.dart'; 
 
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart';
-import 'package:torre_del_mar_app/core/widgets/error_view.dart';
-import 'package:torre_del_mar_app/features/home/presentation/widgets/establishment_card.dart'; 
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
+import 'package:vive_core/core/widgets/error_view.dart';
+import 'package:vive_core/features/home/presentation/widgets/establishment_card.dart';
+import 'package:vive_core/features/hub/presentation/providers/city_config_provider.dart'; 
 import 'providers/navigation_provider.dart';
 
 // CAMBIO 1: Cambiamos a ConsumerStatefulWidget para manejar el estado local del GPS
@@ -20,6 +23,8 @@ class MapScreen extends ConsumerStatefulWidget {
 class _MapScreenState extends ConsumerState<MapScreen> {
   // Variable local para saber si estamos esperando al GPS
   bool _isLocating = false;
+  final MapController _mapController = MapController(); // Añadimos controlador
+  bool _hasCenteredOnCity = false; // Para centrar solo una vez al cargar la ciudad
 
   // FUNCIÓN GPS COMPATIBLE CON HUAWEI
   Future<LatLng?> _getCurrentLocation() async {
@@ -44,7 +49,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       
       return LatLng(position.latitude, position.longitude);
     } catch (e) { 
-      print("Error GPS: $e");
+      Logger.error("Error GPS: $e", "MAP_SCREEN");
       return null; 
     }
   }
@@ -66,17 +71,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     
     // 4. Desactivamos la carga local del GPS
     if (mounted) {
-      setState(() => _isLocating = false);
+      _mapController.move(userLoc!, 16.0);
     }
+    if (mounted) setState(() => _isLocating = false);
+
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     final establishmentsAsync = ref.watch(establishmentsListProvider);
     final navState = ref.watch(navigationProvider); 
     
-    // CAMBIO 2: Combinamos los estados de carga.
-    // Está cargando SI: Estamos buscando GPS (Local) O Estamos calculando ruta (Provider)
+    // 1. Obtenemos el nombre real de la franquicia actual (Ej: "Nerja", "Madrid")
+    final config = ref.watch(cityConfigProvider).valueOrNull;
+    final cityName = config?['resolved_city_name'] ?? 'Málaga';
+
     final bool isBusy = _isLocating || navState.isLoadingRoute;
 
     return Scaffold(
@@ -87,22 +96,49 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           onRetry: () => ref.invalidate(establishmentsListProvider)
         ),
         data: (establishments) {
-          if (establishments.isEmpty) return const Center(child: Text("No hay locales."));
+          final validEst = establishments.where((e) => e.latitude != null && e.longitude != null).toList();
+          
+          // Coordenada inicial de seguridad para que FlutterMap no pete al construirse
+          LatLng initialCenter = const LatLng(36.741, -4.093);
 
-          // Centrado inicial
-          final center = navState.userLocation ?? 
-              (establishments.first.latitude != null 
-                  ? LatLng(establishments.first.latitude!, establishments.first.longitude!)
-                  : const LatLng(36.74, -4.09));
+          if (navState.userLocation != null) {
+            // Prioridad 1: Centrar en el usuario
+            initialCenter = navState.userLocation!;
+          } else if (validEst.isNotEmpty) {
+            // Prioridad 2: Centrar en el primer bar disponible
+            initialCenter = LatLng(validEst.first.latitude!, validEst.first.longitude!);
+          } else {
+            // 🚀 PRIORIDAD 3: Centrar de forma inteligente
+            if (!_hasCenteredOnCity) {
+              _hasCenteredOnCity = true;
+              
+              // 3.A Intentamos leer las coordenadas de la base de datos (App Config)
+              final double? cityLat = config?['gps_lat'];
+              final double? cityLng = config?['gps_lng'];
+              
+              if (cityLat != null && cityLng != null) {
+                // Si la DB las tiene, nos movemos ahí inmediatamente
+                Future.microtask(() => _mapController.move(LatLng(cityLat, cityLng), 14.0));
+              } else {
+                // 3.B Si la DB NO las tiene (Ej: franquicia antigua), buscamos en vivo por el nombre
+                GeocodingHelper.getCoordinatesFromAddress("$cityName, España").then((coords) {
+                  if (coords != null && mounted) {
+                    _mapController.move(LatLng(coords[0], coords[1]), 14.0);
+                  }
+                });
+              }
+            }
+          }
 
           return Stack(
             children: [
               // 1. MAPA
               FlutterMap(
+                mapController: _mapController,
                 options: MapOptions(
-                  initialCenter: center,
+                  initialCenter: initialCenter, // Usamos la variable calculada
                   initialZoom: 15.0,
-                  onTap: (_, __) => ref.read(navigationProvider.notifier).clearSelection(),
+                  onTap: (_, _) => ref.read(navigationProvider.notifier).clearSelection(),
                 ),
                 children: [
                   TileLayer(

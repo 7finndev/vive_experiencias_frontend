@@ -30,7 +30,7 @@ class ErrorView extends StatelessWidget {
     // A. VERSIÓN COMPACTA (Para sitios pequeños como Noticias)
     if (isCompact) {
       return Center(
-        child: SingleChildScrollView( // <--- AÑADIDO: Evita overflow en horizontal/vertical
+        child: SingleChildScrollView( 
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -57,9 +57,8 @@ class ErrorView extends StatelessWidget {
     }
 
     // B. VERSIÓN COMPLETA (Pantallas enteras)
-    // Usamos LayoutBuilder para saber si tenemos espacio suficiente
     return Center(
-      child: SingleChildScrollView( // <--- AÑADIDO: Si la pantalla es pequeña o giras el móvil, hace scroll
+      child: SingleChildScrollView( 
         physics: const BouncingScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.all(24.0),

@@ -32,6 +32,25 @@ class PassportEntryModel extends HiveObject {
     this.rating = 0, // Por defecto 0 si no vota
     required this.eventId, // Obligatorio
   });
+  
+  // 🔥 AÑADIMOS ESTE MÉTODO COPYWITH PARA LA SINCRONIZACIÓN
+  PassportEntryModel copyWith({
+    String? establishmentName,
+    int? establishmentId,
+    DateTime? scannedAt,
+    bool? isSynced,
+    int? rating,
+    int? eventId,
+  }) {
+    return PassportEntryModel(
+      establishmentName: establishmentName ?? this.establishmentName,
+      establishmentId: establishmentId ?? this.establishmentId,
+      scannedAt: scannedAt ?? this.scannedAt,
+      isSynced: isSynced ?? this.isSynced,
+      rating: rating ?? this.rating,
+      eventId: eventId ?? this.eventId,
+    );
+  }
 
   // Factory para JSON (útil futuro)
   factory PassportEntryModel.fromJson(Map<String, dynamic> json) => 

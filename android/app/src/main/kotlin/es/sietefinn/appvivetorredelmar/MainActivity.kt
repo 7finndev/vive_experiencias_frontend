@@ -1,4 +1,4 @@
-package es.sietefinn.appvivetorredelmar // <--- IMPORTANTE: El paquete nuevo
+package es.sevenfinn.viverutas 
 
 import io.flutter.embedding.android.FlutterActivity
 

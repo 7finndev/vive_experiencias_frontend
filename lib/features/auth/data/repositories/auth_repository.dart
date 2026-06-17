@@ -1,7 +1,8 @@
 // NECESARIO para Uint8List
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:torre_del_mar_app/features/auth/data/datasources/auth_service.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
+import 'package:vive_core/features/auth/data/datasources/auth_service.dart';
 
 class AuthRepository {
   final AuthService _authService;
@@ -38,7 +39,7 @@ class AuthRepository {
     required String userId,
     String? name,
     String? phone,
-    Uint8List? imageBytes, // <--- CAMBIO: Recibimos bytes, no File
+    Uint8List? imageBytes,
   }) async {
     final updates = <String, dynamic>{};
     
@@ -53,29 +54,24 @@ class AuthRepository {
 
     // 2. Si hay imagen nueva (BYTES), la subimos
     if (imageBytes != null) {
-      // Como usamos ImageHelper, sabemos que siempre es JPG
       final fileName = '$userId/avatar.jpg'; 
 
       try {
-        // CAMBIO: Usamos uploadBinary en lugar de upload
-        // Esto funciona en Web y Móvil por igual
         await _client.storage.from('avatars').uploadBinary(
           fileName,
           imageBytes,
           fileOptions: const FileOptions(
             upsert: true,
-            contentType: 'image/jpeg', // Importante para que el navegador sepa qué es
+            contentType: 'image/jpeg', 
           ),
         );
 
-        // Obtenemos la URL pública
         final imageUrl = _client.storage.from('avatars').getPublicUrl(fileName);
-        
-        // Añadimos timestamp para romper caché
         final timestamp = DateTime.now().millisecondsSinceEpoch;
         updates['avatar_url'] = "$imageUrl?t=$timestamp";
         
       } catch (e) {
+        Logger.error('Error subiendo imagen al servidor: $e', "AUTH");
         throw 'Error subiendo imagen al servidor: $e';
       }
     }
@@ -92,21 +88,39 @@ class AuthRepository {
         throw 'No se pudo actualizar el perfil en la base de datos';
       }
 
-      try{
+      try {
+        // 👇 SOLUCIÓN: Usar "if" de colección en lugar de "?variable"
+        //final Map<String, dynamic> profileUpdates = {
+        //  'full_name': ?name,
+        //  'phone': ?phone,
+        //  if (updates.containsKey('avatar_url')) 'avatar_url': updates['avatar_url'],
+        //  'updated_at': DateTime.now().toIso8601String(),
+        //};
+        //El codigo de arriba siempre se pone aunque lo corrija
+        //Ahora cuando vuelva a "descorregirse" tengo
+        // en comentario el codigo correcto y corregido para asi
+        //  no tener que volver a buscarlo.
         final Map<String, dynamic> profileUpdates = {
-          if(name != null) 'full_name' : name,
-          if(phone != null) 'phone' : phone,
-          if(updates.containsKey('avatar_url')) 'avatar_url' : updates['avatar_url'],
-          'updated_at' : DateTime.now().toIso8601String(),
+          if (name != null) 'full_name': name,
+          if (phone != null) 'phone': phone,
+          if (updates.containsKey('avatar_url')) 'avatar_url': updates['avatar_url'],
+          'updated_at': DateTime.now().toIso8601String(),
         };
+        /* De todas formas lo dejo guardado en comentarios:
+        final Map<String, dynamic> profileUpdates = {
+          if (name != null) 'full_name': name,
+          if (phone != null) 'phone': phone,
+          if (updates.containsKey('avatar_url')) 'avatar_url': updates['avatar_url'],
+          'updated_at': DateTime.now().toIso8601String(),
+        };
+        */
 
         await _client
           .from('profiles')
           .update(profileUpdates)
           .eq('id', userId);
       } catch (e) {
-        //Si falla aquí, hay problemas de permisos RLS en Supabase
-        print('⚠️ Error al actualizar la tabla profiles: $e');
+        Logger.error('⚠️ Error al actualizar la tabla profiles: $e', "AUTH");
         throw 'Error al guardar los datos públicos: $e';
       }
     }

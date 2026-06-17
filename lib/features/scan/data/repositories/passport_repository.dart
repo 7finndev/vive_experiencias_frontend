@@ -1,7 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:torre_del_mar_app/core/local_storage/local_db_service.dart';
-import 'package:torre_del_mar_app/features/scan/data/models/passport_entry_model.dart';
+import 'package:vive_core/core/local_storage/local_db_service.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
+import 'package:vive_core/features/scan/data/models/passport_entry_model.dart';
 
 part 'passport_repository.g.dart';
 
@@ -39,7 +40,7 @@ class PassportRepository {
 
     // Guardamos en la cajita del móvil
     await _localDb.pendingVotesBox.add(entry);
-    print("✅ Sello guardado en el móvil (Offline/Guest): $establishmentName");
+    Logger.info("✅ Sello guardado en el móvil (Offline/Guest): $establishmentName", "PASSPORT_REPOSITORY");
   }
 
   // --- 2. LEER VISADOS (MODIFICADO) ---
@@ -61,7 +62,7 @@ class PassportRepository {
   Future<void> clearLocalData() async {
     await _localDb.pendingVotesBox.clear();
     await _localDb.syncedStampsBox.clear();
-    print("🧹 Datos locales del pasaporte eliminados.");
+    Logger.info("🧹 Datos locales del pasaporte eliminados.", "PASSPORT_REPOSITORY");
   }
 }
 

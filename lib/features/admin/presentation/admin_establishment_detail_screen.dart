@@ -2,10 +2,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:torre_del_mar_app/core/utils/qr_download_widget.dart';
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
-import 'package:torre_del_mar_app/features/home/data/models/product_model.dart';
-import 'package:torre_del_mar_app/features/home/data/repositories/product_repository.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
+import 'package:vive_core/core/utils/qr_download_widget.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/features/home/data/models/product_model.dart';
+import 'package:vive_core/features/home/data/repositories/product_repository.dart';
 
 final productsByEstablishmentProvider = FutureProvider.family
     .autoDispose<List<ProductModel>, int>((ref, establishmentId) async {
@@ -67,12 +68,12 @@ class _AdminEstablishmentDetailScreenState extends ConsumerState<AdminEstablishm
                         Image.network(imageUrl, fit: BoxFit.cover),
                         BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
-                          child: Container(color: Colors.black.withOpacity(0.5)),
+                          child: Container(color: Colors.black.withValues(alpha: 0.5)),
                         ),
                         Image.network(
                           imageUrl,
                           fit: BoxFit.contain,
-                          errorBuilder: (_,__,___) => const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 50)),
+                          errorBuilder: (_,_,_) => const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 50)),
                         ),
                       ],
                     )
@@ -189,7 +190,7 @@ class _AdminEstablishmentDetailScreenState extends ConsumerState<AdminEstablishm
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: products.length,
-                        separatorBuilder: (_, __) => const Divider(),
+                        separatorBuilder: (_, _) => const Divider(),
                         itemBuilder: (context, index) {
                           final prod = products[index]; 
                           return ListTile(
@@ -266,7 +267,7 @@ class _SocialButton extends StatelessWidget {
       color: isActive ? color : Colors.grey[300],
       onPressed: isActive ? () {
         // Aquí podrías usar url_launcher para abrir el link
-        debugPrint("Abrir URL: $url");
+        Logger.info("Abrir URL: $url", "ADMIN_ESTABLISHMENT_DETAIL_SCREEN");
       } : null, // Desactivado si no hay URL
     );
   }

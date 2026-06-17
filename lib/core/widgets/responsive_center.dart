@@ -24,16 +24,16 @@ class ResponsiveCenter extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor, // Fondo del tema
             boxShadow: [
-              // Le damos una sombrita para que destaque sobre el fondo del navegador
+              // Le damos una sombra para que destaque sobre el fondo del navegador
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 5),
               ),
             ],
             // Opcional: Borde finito para separar visualmente
             border: Border.symmetric(
-              vertical: BorderSide(color: Colors.grey.withOpacity(0.2)),
+              vertical: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
             ),
           ),
           child: child,

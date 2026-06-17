@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart';
-// import 'package:torre_del_mar_app/core/utils/smart_image_container.dart'; // Ya no lo usaremos aquí directamente para tener más control
-import 'package:torre_del_mar_app/core/widgets/error_view.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
+// import 'package:vive_core/core/utils/smart_image_container.dart'; // Ya no lo usaremos aquí directamente para tener más control
+import 'package:vive_core/core/widgets/error_view.dart';
 
 class TapasListScreen extends ConsumerWidget {
   const TapasListScreen({super.key});
@@ -86,7 +86,7 @@ class TapasListScreen extends ConsumerWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0,4))
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0,4))
                       ],
                     ),
                     child: Column(

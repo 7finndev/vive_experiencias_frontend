@@ -1,3 +1,5 @@
+import 'package:vive_core/core/utils/logger_service.dart';
+
 class RankingItem {
   final int productId;
   final int establishmentId; // Necesario para navegar al detalle
@@ -26,7 +28,7 @@ class RankingItem {
   factory RankingItem.fromJson(Map<String, dynamic> json) {
     // CHIVATO DE DEPURACIÓN
     if (json['establishment_id'] == null) {
-      print("⚠️ ALERTA: establishment_id es NULL en el JSON recibido: $json");
+      Logger.warning("⚠️ ALERTA: establishment_id es NULL en el JSON recibido: $json", "RANKING_ITEM");
     }    
     return RankingItem(
       // Usamos (json['key'] as num?)?.toInt()

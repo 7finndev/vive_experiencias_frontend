@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:torre_del_mar_app/features/home/data/models/product_item_model.dart';
+import 'package:vive_core/features/home/data/models/product_item_model.dart';
 
 part 'product_model.g.dart'; 
 
@@ -42,6 +42,8 @@ class ProductModel {
   @HiveField(11) // Le damos un índice nuevo
   final List<ProductItemModel> items; 
 
+  final String? establishmentName; // Este campo no se guarda en Hive, solo se usa para mostrar en la UI
+  
   ProductModel({
     required this.id,
     required this.name,
@@ -55,6 +57,7 @@ class ProductModel {
     this.allergens,
     this.isWinner = false,
     this.items = const [], 
+    this.establishmentName,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -65,6 +68,11 @@ class ProductModel {
           .toList();
     }
 
+    String? estName;
+    if(json['establishments'] != null && json['establishments'] is Map) {
+      estName = json['establishments']['name'];
+    }
+    
     return ProductModel(
       id: json['id'],
       name: json['name'],
@@ -78,6 +86,7 @@ class ProductModel {
       allergens: json['allergens'] != null ? List<String>.from(json['allergens']) : null,
       isWinner: json['is_winner'] ?? false,
       items: itemsList, 
+      establishmentName: estName,
     );
   }
 

@@ -1,7 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
 
 class EventShellScreen extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
@@ -23,7 +26,7 @@ class EventShellScreen extends ConsumerWidget {
           ref.read(currentEventIdProvider.notifier).state = id;
         }
       } catch (e) {
-        print("Error parsing event ID: $e");
+        Logger.error("Error parsing event ID: $e", "EVENT_SHELL_SCREEN");
       }
     });
 
@@ -75,6 +78,7 @@ class EventShellScreen extends ConsumerWidget {
            textColor = Color(int.parse(event.textColorHex!.replaceAll('#', '0xff')));
          }
        } catch (_) {
+         Logger.error("Error parsing colors: $e", "EVENT_SHELL_SCREEN");
          // Si falla algún color, mantenemos los defaults
        }
     }
@@ -88,32 +92,32 @@ class EventShellScreen extends ConsumerWidget {
     // Así evitamos el error de intentar acceder a .icon más tarde
     final destinations = [
       NavigationDestination(
-        icon: Icon(Icons.home_outlined, color: textColor.withOpacity(0.6)), // Color inactivo
+        icon: Icon(Icons.home_outlined, color: textColor.withValues(alpha: 0.6)), // Color inactivo
         selectedIcon: Icon(Icons.home, color: themeColor), // Color activo
         label: 'Inicio'
       ),
       NavigationDestination(
-        icon: Icon(Icons.map_outlined, color: textColor.withOpacity(0.6)),
+        icon: Icon(Icons.map_outlined, color: textColor.withValues(alpha: 0.6)),
         selectedIcon: Icon(Icons.map, color: themeColor),
         label: 'Mapa'
       ),
       NavigationDestination(
-        icon: Icon(Icons.storefront_outlined, color: textColor.withOpacity(0.6)),
+        icon: Icon(Icons.storefront_outlined, color: textColor.withValues(alpha: 0.6)),
         selectedIcon: Icon(Icons.storefront, color: themeColor),
         label: 'Locales'
       ),
       NavigationDestination(
-        icon: Icon(productIcon, color: textColor.withOpacity(0.6)),
+        icon: Icon(productIcon, color: textColor.withValues(alpha: 0.6)),
         selectedIcon: Icon(productIconSelected, color: themeColor),
         label: productLabel
       ),
       NavigationDestination(
-        icon: Icon(Icons.emoji_events_outlined, color: textColor.withOpacity(0.6)),
+        icon: Icon(Icons.emoji_events_outlined, color: textColor.withValues(alpha: 0.6)),
         selectedIcon: Icon(Icons.emoji_events, color: themeColor),
         label: 'Ranking'
       ),
       NavigationDestination(
-        icon: Icon(Icons.verified_outlined, color: textColor.withOpacity(0.6)),
+        icon: Icon(Icons.verified_outlined, color: textColor.withValues(alpha: 0.6)),
         selectedIcon: Icon(Icons.verified, color: themeColor),
         label: 'Pasaporte'
       ),
@@ -157,8 +161,9 @@ class EventShellScreen extends ConsumerWidget {
                             children: [
                               const SizedBox(height: 20),
                               FloatingActionButton(
+                                heroTag: 'fab_back_to_home', // Evita conflictos si hay varios FAB
                                 elevation: 0,
-                                backgroundColor: themeColor.withOpacity(0.1), // Botón atrás sutil
+                                backgroundColor: themeColor.withValues(alpha: 0.1), // Botón atrás sutil
                                 foregroundColor: themeColor,
                                 tooltip: "Volver al inicio",
                                 onPressed: () => context.go('/'),
@@ -173,12 +178,12 @@ class EventShellScreen extends ConsumerWidget {
                           
                           // TEMAS DE ICONOS
                           selectedIconTheme: IconThemeData(color: themeColor),
-                          unselectedIconTheme: IconThemeData(color: textColor.withOpacity(0.6)),
+                          unselectedIconTheme: IconThemeData(color: textColor.withValues(alpha: 0.6)),
                           selectedLabelTextStyle: TextStyle(color: themeColor, fontWeight: FontWeight.bold),
-                          unselectedLabelTextStyle: TextStyle(color: textColor.withOpacity(0.6)),
+                          unselectedLabelTextStyle: TextStyle(color: textColor.withValues(alpha: 0.6)),
                           
                           useIndicator: true,
-                          indicatorColor: themeColor.withOpacity(0.2),
+                          indicatorColor: themeColor.withValues(alpha: 0.2),
                           elevation: 1,
                           minWidth: 80,
                           groupAlignment: -1.0, 
@@ -197,7 +202,7 @@ class EventShellScreen extends ConsumerWidget {
             : NavigationBar(
                 backgroundColor: navColor, // <--- COLOR BARRA INFERIOR
                 selectedIndex: navigationShell.currentIndex,
-                indicatorColor: themeColor.withOpacity(0.2), // Fondo del botón activo
+                indicatorColor: themeColor.withValues(alpha: 0.2), // Fondo del botón activo
                 
                 // Aquí usamos directamente la lista que ya creamos con colores
                 destinations: destinations,

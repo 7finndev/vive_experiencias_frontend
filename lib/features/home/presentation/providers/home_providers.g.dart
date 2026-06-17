@@ -42,7 +42,7 @@ final passportRepositoryProvider =
 
 typedef PassportRepositoryRef = AutoDisposeProviderRef<PassportRepository>;
 String _$establishmentsListHash() =>
-    r'063787dfca766f3fc7a16a87eef34cbe73fcf657';
+    r'daf6fda25f4a1c9ae9a5268c196de84c83c85a98';
 
 /// See also [establishmentsList].
 @ProviderFor(establishmentsList)
@@ -92,7 +92,7 @@ final productsListProvider =
 );
 
 typedef ProductsListRef = AutoDisposeFutureProviderRef<List<ProductModel>>;
-String _$currentEventHash() => r'9267c39454e6a84f846f2a19132fd19133ec292e';
+String _$currentEventHash() => r'a43b72310d43cf4d1ddf6753b7635bbe7eb81435';
 
 /// See also [currentEvent].
 @ProviderFor(currentEvent)
@@ -106,7 +106,7 @@ final currentEventProvider = AutoDisposeFutureProvider<EventModel>.internal(
 );
 
 typedef CurrentEventRef = AutoDisposeFutureProviderRef<EventModel>;
-String _$adminEventsListHash() => r'93755cb6d121cbcc13c2a64a873039fe2e0930d0';
+String _$adminEventsListHash() => r'e217d2e91f985382803aa840b8ecba2420c3f2a6';
 
 /// See also [adminEventsList].
 @ProviderFor(adminEventsList)
@@ -289,7 +289,7 @@ class _EventDetailsProviderElement
   int get eventId => (origin as EventDetailsProvider).eventId;
 }
 
-String _$sponsorsListHash() => r'f85c9601192243dc9819a0d1d6ea50a83480c8ff';
+String _$sponsorsListHash() => r'bde7584e20179f43f620d79e2cec18393714e7b4';
 
 /// See also [sponsorsList].
 @ProviderFor(sponsorsList)

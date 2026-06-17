@@ -1,6 +1,6 @@
 import 'package:hive/hive.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:torre_del_mar_app/features/home/data/models/product_model.dart';
+import 'package:vive_core/features/home/data/models/product_model.dart';
 
 part 'establishment_model.g.dart';
 
@@ -10,9 +10,8 @@ class EstablishmentModel extends HiveObject {
   @HiveField(0) final int id;
   @HiveField(1) final String name;
   @HiveField(2) final String? address;
-  @HiveField(3) @JsonKey(name: 'gps_lat') final double? latitude;
-  @HiveField(4) @JsonKey(name: 'gps_lng') final double? longitude;
-  @HiveField(5) @JsonKey(name: 'qr_uuid') final String qrUuid;
+  @HiveField(3) @JsonKey(name: 'latitude') final double? latitude;
+  @HiveField(4) @JsonKey(name: 'longitude') final double? longitude;  @HiveField(5) @JsonKey(name: 'qr_uuid') final String qrUuid;
   @HiveField(6, defaultValue: true) @JsonKey(name: 'is_active') final bool isActive;
   @HiveField(7) @JsonKey(name: 'google_place_id') final String? googlePlaceId;
   @HiveField(8) final String? description;
@@ -40,6 +39,10 @@ class EstablishmentModel extends HiveObject {
   @JsonKey(name: 'waiter_pin')
   final String? waiterPin;
 
+  @HiveField(22) // En orden correlativo de tus @HiveField
+  @JsonKey(name: 'city_id') 
+  final int? cityId;
+
   EstablishmentModel({
     required this.id,
     required this.name,
@@ -54,7 +57,6 @@ class EstablishmentModel extends HiveObject {
     this.website,
     this.schedule,
     this.coverImage,
-    // Nuevos en constructor
     this.ownerName,
     this.ownerPhone,
     this.ownerEmail,
@@ -64,6 +66,7 @@ class EstablishmentModel extends HiveObject {
     this.instagram,
     this.products,
     this.waiterPin,
+    this.cityId,
   });
 
   factory EstablishmentModel.fromJson(Map<String, dynamic> json) => 

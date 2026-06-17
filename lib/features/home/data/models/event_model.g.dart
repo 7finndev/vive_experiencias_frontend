@@ -32,13 +32,14 @@ class EventModelAdapter extends TypeAdapter<EventModel> {
       navColorHex: fields[12] as String?,
       textColorHex: fields[13] as String?,
       fontFamily: fields[14] as String?,
+      cityId: fields[15] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, EventModel obj) {
     writer
-      ..writeByte(15)
+      ..writeByte(16)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -68,7 +69,9 @@ class EventModelAdapter extends TypeAdapter<EventModel> {
       ..writeByte(13)
       ..write(obj.textColorHex)
       ..writeByte(14)
-      ..write(obj.fontFamily);
+      ..write(obj.fontFamily)
+      ..writeByte(15)
+      ..write(obj.cityId);
   }
 
   @override
@@ -102,6 +105,7 @@ EventModel _$EventModelFromJson(Map<String, dynamic> json) => EventModel(
       navColorHex: json['nav_color'] as String?,
       textColorHex: json['text_color'] as String?,
       fontFamily: json['font_family'] as String?,
+      cityId: (json['city_id'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$EventModelToJson(EventModel instance) =>
@@ -121,4 +125,5 @@ Map<String, dynamic> _$EventModelToJson(EventModel instance) =>
       'nav_color': instance.navColorHex,
       'text_color': instance.textColorHex,
       'font_family': instance.fontFamily,
+      'city_id': instance.cityId,
     };

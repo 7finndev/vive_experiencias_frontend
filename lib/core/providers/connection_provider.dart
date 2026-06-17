@@ -6,7 +6,7 @@ final connectivityStreamProvider = StreamProvider<List<ConnectivityResult>>((ref
   return Connectivity().onConnectivityChanged;
 });
 
-// Dice simplemente: ¿Hay internet o no?
+// Si hay internet o no
 final hasInternetProvider = Provider<bool>((ref) {
   final statusAsync = ref.watch(connectivityStreamProvider);
   
@@ -20,6 +20,6 @@ final hasInternetProvider = Provider<bool>((ref) {
     },
     // Por defecto, asumimos que sí mientras carga para no asustar
     loading: () => true, 
-    error: (_, __) => true,
+    error: (_, _) => true,
   );
 });

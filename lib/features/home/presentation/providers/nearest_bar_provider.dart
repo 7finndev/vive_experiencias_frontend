@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart';
-import 'package:torre_del_mar_app/features/scan/presentation/providers/scan_status_provider.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
+import 'package:vive_core/features/scan/presentation/providers/scan_status_provider.dart';
 
 // Modelo de retorno simple
 class NearestBarResult {

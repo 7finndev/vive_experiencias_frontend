@@ -2,10 +2,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart';
-import 'package:torre_del_mar_app/features/scan/presentation/providers/passport_provider.dart';
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
-import 'package:torre_del_mar_app/core/utils/smart_image_container.dart';
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
+import 'package:vive_core/features/scan/presentation/providers/passport_provider.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/core/utils/smart_image_container.dart';
 
 class SmartRecommendationCard extends ConsumerWidget {
   final int eventId;
@@ -22,11 +22,11 @@ class SmartRecommendationCard extends ConsumerWidget {
 
     return passportAsync.when(
       loading: () => const SizedBox(), // Cargando silencioso
-      error: (_, __) => const SizedBox(),
+      error: (_, _) => const SizedBox(),
       data: (stamps) {
         return establishmentsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const SizedBox(),
+          error: (_, _) => const SizedBox(),
           data: (establishments) {
             
             // 1. FILTRADO INTELIGENTE
@@ -71,7 +71,7 @@ class SmartRecommendationCard extends ConsumerWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5)),
+          BoxShadow(color: Colors.blue.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5)),
         ],
       ),
       child: Column(

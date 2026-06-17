@@ -1,15 +1,43 @@
-import 'dart:typed_data'; // Para manejar los bytes de la imagen
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
 // RUTA AL IMAGE HELPER
-import 'package:torre_del_mar_app/core/utils/image_helper.dart';
+import 'package:vive_core/core/utils/image_helper.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
 
 // MODELOS
-import 'package:torre_del_mar_app/features/hub/data/models/app_config_model.dart';
-import 'package:torre_del_mar_app/features/hub/data/models/app_news_model.dart'; 
+import 'package:vive_core/features/hub/data/models/app_config_model.dart';
+import 'package:vive_core/features/hub/data/models/app_news_model.dart'; 
+
+// =============================================================================
+// 🔥 PROVIDER SEGURO: Busca la ciudad REAL del Admin en su perfil de base de datos
+// =============================================================================
+final adminNewsProvider = FutureProvider.autoDispose<List<AppNewsModel>>((ref) async {
+  final supabase = Supabase.instance.client;
+  final user = supabase.auth.currentUser;
+  
+  if (user == null) return [];
+
+  // 1. Buscamos a qué ciudad pertenece el Admin logueado
+  final profile = await supabase.from('profiles').select('city_id').eq('id', user.id).maybeSingle();
+  final adminCityId = profile?['city_id'];
+
+  if (adminCityId == null) return [];
+
+  // 2. Traemos SOLO las noticias de esa ciudad
+  final response = await supabase
+      .from('app_news')
+      .select()
+      .eq('city_id', adminCityId)
+      .order('priority', ascending: false)
+      .order('published_at', ascending: false);
+      
+  return response.map((json) => AppNewsModel.fromJson(json)).toList();
+});
+
 
 class AdminNewsScreen extends ConsumerStatefulWidget {
   const AdminNewsScreen({super.key});
@@ -23,17 +51,21 @@ class _AdminNewsScreenState extends ConsumerState<AdminNewsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Escuchar cambios en tiempo real
-    final newsStream = _supabase
-        .from('app_news')
-        .stream(primaryKey: ['id'])
-        .order('priority', ascending: false)
-        .order('published_at', ascending: false);
+    // Escuchamos el provider seguro que acabamos de crear
+    final newsAsync = ref.watch(adminNewsProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestión de Noticias'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Actualizar lista',
+            onPressed: () {
+              ref.invalidate(adminNewsProvider);
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Actualizando...'), duration: Duration(milliseconds: 800)));
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             tooltip: 'Configuración',
@@ -42,23 +74,21 @@ class _AdminNewsScreenState extends ConsumerState<AdminNewsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_add_news', // Evita conflictos si hay varios FAB
         child: const Icon(Icons.add),
         onPressed: () => _showNewsForm(context, null),
       ),
-      body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: newsStream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-
-          final data = snapshot.data!;
-          if (data.isEmpty) return const Center(child: Text('No hay noticias internas.'));
+      body: newsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(child: Text('Error: $err')),
+        data: (data) {
+          if (data.isEmpty) return const Center(child: Text('No hay noticias en tu franquicia.'));
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: data.length,
             itemBuilder: (context, index) {
-              final news = AppNewsModel.fromJson(data[index]);
+              final news = data[index];
               return _NewsCard(
                 news: news,
                 onEdit: () => _showNewsForm(context, news),
@@ -86,6 +116,9 @@ class _AdminNewsScreenState extends ConsumerState<AdminNewsScreen> {
 
     if (confirm == true) {
       await _supabase.from('app_news').delete().eq('id', id);
+      
+      ref.invalidate(adminNewsProvider);
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Noticia eliminada')));
       }
@@ -94,9 +127,23 @@ class _AdminNewsScreenState extends ConsumerState<AdminNewsScreen> {
 
   void _showConfigDialog(BuildContext context) async {
     try {
-      final data = await _supabase.from('app_config').select().eq('id', 1).single();
-      final config = AppConfigModel.fromJson(data);
+      // Obtenemos la ciudad del perfil del admin
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+      
+      final profile = await _supabase.from('profiles').select('city_id').eq('id', user.id).maybeSingle();
+      final adminCityId = profile?['city_id'];
+
+      final data = await _supabase.from('app_config').select().eq('city_id', adminCityId).maybeSingle();
+      
       if (!mounted) return;
+      
+      if (data == null) {
+         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No hay configuración para esta ciudad aún')));
+         return;
+      }
+      
+      final config = AppConfigModel.fromJson(data);
       showDialog(context: context, builder: (ctx) => _ConfigDialog(config: config));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error cargando config: $e')));
@@ -130,7 +177,7 @@ class _NewsCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           child: news.imageUrl != null
               ? Image.network(news.imageUrl!, width: 50, height: 50, fit: BoxFit.cover, 
-                  errorBuilder: (_,__,___) => Container(width: 50, height: 50, color: Colors.grey[300], child: const Icon(Icons.broken_image, size: 20)))
+                  errorBuilder: (_,_,_) => Container(width: 50, height: 50, color: Colors.grey[300], child: const Icon(Icons.broken_image, size: 20)))
               : Container(width: 50, height: 50, color: Colors.blue[100], child: const Icon(Icons.newspaper, color: Colors.blue)),
         ),
         title: Text(
@@ -156,17 +203,18 @@ class _NewsCard extends StatelessWidget {
 }
 
 // =============================================================================
-// DIÁLOGO: FORMULARIO (OPTIMIZADO CON IMAGEHELPER)
+// DIÁLOGO: FORMULARIO 
 // =============================================================================
-class _NewsFormDialog extends StatefulWidget {
+class _NewsFormDialog extends ConsumerStatefulWidget {
   final AppNewsModel? news;
+
   const _NewsFormDialog({this.news});
 
   @override
-  State<_NewsFormDialog> createState() => _NewsFormDialogState();
+  ConsumerState<_NewsFormDialog> createState() => _NewsFormDialogState();
 }
 
-class _NewsFormDialogState extends State<_NewsFormDialog> {
+class _NewsFormDialogState extends ConsumerState<_NewsFormDialog> {
   final _formKey = GlobalKey<FormState>();
   
   late TextEditingController _titleCtrl;
@@ -174,9 +222,8 @@ class _NewsFormDialogState extends State<_NewsFormDialog> {
   late double _priority;
   late bool _isActive;
 
-  // IMAGEN
-  String? _currentImageUrl; // URL existente (si editamos)
-  Uint8List? _newImageBytes; // Nueva imagen seleccionada (comprimida)
+  String? _currentImageUrl; 
+  Uint8List? _newImageBytes; 
   bool _isUploading = false;
 
   @override
@@ -190,12 +237,10 @@ class _NewsFormDialogState extends State<_NewsFormDialog> {
     _currentImageUrl = n?.imageUrl;
   }
 
-  // USAMOS TU IMAGE_HELPER AQUÍ
   Future<void> _pickImage() async {
-    // Usamos el Helper que ya tenías creado. ¡Ahorra código y optimiza!
     final Uint8List? bytes = await ImageHelper.pickAndCompress(
       source: ImageSource.gallery,
-      quality: 70, // Calidad buena/media
+      quality: 70, 
       maxWidth: 1024,
     );
 
@@ -216,7 +261,6 @@ class _NewsFormDialogState extends State<_NewsFormDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // PREVIEW IMAGEN
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
@@ -279,29 +323,15 @@ class _NewsFormDialogState extends State<_NewsFormDialog> {
   }
 
   Widget _buildPreview() {
-    // Variable para controlar cómo se ve la imagen
-    // contain: Se ve entera (puede dejar bordes grises)
-    // cover: Llena todo (puede recortar bordes)
     const BoxFit fitMode = BoxFit.contain; 
-
     if (_newImageBytes != null) {
-      // Imagen nueva seleccionada (Memoria)
       return Image.memory(_newImageBytes!, fit: fitMode);
     } else if (_currentImageUrl != null) {
-      // Imagen que ya existía (Internet)
-      return Image.network(
-        _currentImageUrl!, 
-        fit: fitMode, 
-        errorBuilder: (_,__,___) => const Icon(Icons.broken_image)
-      );
+      return Image.network(_currentImageUrl!, fit: fitMode, errorBuilder: (_,_,_) => const Icon(Icons.broken_image));
     }
-    // Estado vacío
     return const Column(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey), 
-        Text("Toca para subir", style: TextStyle(color: Colors.grey))
-      ],
+      children: [Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey), Text("Toca para subir", style: TextStyle(color: Colors.grey))]
     );
   }
 
@@ -310,65 +340,63 @@ class _NewsFormDialogState extends State<_NewsFormDialog> {
     setState(() => _isUploading = true);
 
     try {
-      String? finalImageUrl = _currentImageUrl;
       final supabase = Supabase.instance.client;
+      
+      // 🔥 OBTENEMOS LA CIUDAD REAL DEL ADMIN ANTES DE GUARDAR
+      final user = supabase.auth.currentUser;
+      final profile = await supabase.from('profiles').select('city_id').eq('id', user!.id).maybeSingle();
+      final adminCityId = profile?['city_id'];
 
-      // 1. SUBIR IMAGEN (Solo si el usuario eligió una nueva)
+      if (adminCityId == null) throw Exception("No se encontró la franquicia de este usuario");
+
+      String? finalImageUrl = _currentImageUrl;
+
       if (_newImageBytes != null) {
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg'; // Forzamos jpg porque ImageHelper devuelve jpg
-        final filePath = 'news_images/$fileName'; // Carpeta virtual dentro del bucket
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg'; 
+        final filePath = 'news_images/$fileName'; 
 
-        // Subida binaria directa (Funciona en Web y Móvil igual gracias a Uint8List)
         await supabase.storage.from('news').uploadBinary(
-          filePath,
-          _newImageBytes!,
+          filePath, _newImageBytes!,
           fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true),
         );
 
         finalImageUrl = supabase.storage.from('news').getPublicUrl(filePath);
       }
 
-      // 2. PREPARAR DATOS
       final data = {
         'title': _titleCtrl.text,
         'image_url': finalImageUrl,
         'link_url': _linkCtrl.text.isNotEmpty ? _linkCtrl.text : null,
         'priority': _priority.round(),
         'is_active': _isActive,
-        'updated_at': DateTime.now().toIso8601String(), // Refrescar caché
+        'updated_at': DateTime.now().toIso8601String(),
+        'city_id': adminCityId, // 🔥 GUARDADO BLINDADO
       };
 
-      // 3. INSERTAR O ACTUALIZAR
       if (widget.news == null) {
         await supabase.from('app_news').insert(data);
       } else {
         await supabase.from('app_news').update(data).eq('id', widget.news!.id);
       }
 
-      // 4. CERRAR Y MOSTRAR MENSAJE
+      ref.invalidate(adminNewsProvider);
+
       if (mounted) {
-        Navigator.pop(context); // Cerramos el diálogo PRIMERO
-        
-        // Usamos el ScaffoldMessenger de la pantalla padre
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(widget.news == null ? 'Noticia creada con éxito' : 'Noticia actualizada'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        Navigator.pop(context); 
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(widget.news == null ? 'Noticia creada con éxito' : 'Noticia actualizada'), backgroundColor: Colors.green));
       }
     } catch (e) {
-      print("Error guardando noticia: $e");
+      Logger.error("Error guardando noticia: $e", "ADMIN_NEWS_SCREEN");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-        setState(() => _isUploading = false); // Paramos el spinner si falló
+        setState(() => _isUploading = false); 
       }
     }
   }
 }
 
 // =============================================================================
-// DIÁLOGO CONFIGURACIÓN (Sin cambios mayores, solo el fix del SnackBar)
+// DIÁLOGO CONFIGURACIÓN 
 // =============================================================================
 class _ConfigDialog extends StatefulWidget {
   final AppConfigModel config;
@@ -399,7 +427,7 @@ class _ConfigDialogState extends State<_ConfigDialog> {
         children: [
           SwitchListTile(
             title: const Text('Noticias Externas'),
-            subtitle: const Text('Mostrar desde torredelmar.org'),
+            subtitle: const Text('Mostrar desde web oficial'),
             value: _externalEnabled,
             onChanged: (v) => setState(() => _externalEnabled = v),
           ),
@@ -416,14 +444,19 @@ class _ConfigDialogState extends State<_ConfigDialog> {
 
   Future<void> _save() async {
     try {
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+      final profile = await supabase.from('profiles').select('city_id').eq('id', user!.id).maybeSingle();
+      final adminCityId = profile?['city_id'];
+
       final interval = (int.tryParse(_intervalCtrl.text) ?? 5) * 1000;
       final max = int.tryParse(_maxCountCtrl.text) ?? 5;
       
-      await Supabase.instance.client.from('app_config').update({
+      await supabase.from('app_config').update({
         'carousel_interval_ms': interval,
         'max_news_count': max,
         'enable_external_source': _externalEnabled,
-      }).eq('id', 1);
+      }).eq('city_id', adminCityId);
 
       if (mounted) {
         Navigator.pop(context);

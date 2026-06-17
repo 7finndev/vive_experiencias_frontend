@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
-import 'package:torre_del_mar_app/core/utils/smart_image_container.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/core/utils/smart_image_container.dart';
 
 class EstablishmentCard extends StatelessWidget {
   final EstablishmentModel establishment;
@@ -23,7 +23,7 @@ class EstablishmentCard extends StatelessWidget {
               ? [] // Sin sombra si cerrado (efecto plano)
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   )
@@ -57,7 +57,7 @@ class EstablishmentCard extends StatelessWidget {
                       gradient: LinearGradient(
                         begin: Alignment.centerRight,
                         end: Alignment.centerLeft,
-                        colors: [Colors.black.withOpacity(0.1), Colors.transparent],
+                        colors: [Colors.black.withValues(alpha: 0.1), Colors.transparent],
                       ),
                     ),
                   ),
@@ -65,7 +65,7 @@ class EstablishmentCard extends StatelessWidget {
                   // ETIQUETA "CERRADO" SOBRE LA FOTO
                   if (isClosed)
                     Container(
-                      color: Colors.black.withOpacity(0.6),
+                      color: Colors.black.withValues(alpha: 0.6),
                       child: const Center(
                         child: Text(
                           "CERRADO\nTEMPORALMENTE",

@@ -20,7 +20,7 @@ class SponsorLogo extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),
@@ -29,11 +29,11 @@ class SponsorLogo extends StatelessWidget {
         child: CachedNetworkImage(
           imageUrl: imageUrl,
           fit: BoxFit.contain,
-          placeholder: (_, __) => const Padding(
+          placeholder: (_, _) => const Padding(
             padding: EdgeInsets.all(10.0),
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
-          errorWidget: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey, size: 20),
+          errorWidget: (_, _, _) => const Icon(Icons.broken_image, color: Colors.grey, size: 20),
         ),
       ),
     );

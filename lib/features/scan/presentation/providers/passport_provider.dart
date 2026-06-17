@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart';
-import 'package:torre_del_mar_app/features/scan/data/models/passport_entry_model.dart';
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
+import 'package:vive_core/features/scan/data/models/passport_entry_model.dart';
 // IMPORTANTE: Importar el auth provider
-import 'package:torre_del_mar_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:vive_core/features/auth/presentation/providers/auth_provider.dart';
 
 part 'passport_provider.g.dart';
 
@@ -29,7 +29,7 @@ bool hasStamp(HasStampRef ref, {required int establishmentId, required int event
       // Comprobamos si en la lista hay algún sello con ese ID de establecimiento
       return list.any((entry) => entry.establishmentId == establishmentId);
     },
-    error: (_, __) => false,
+    error: (_, _) => false,
     loading: () => false,
   );
 }

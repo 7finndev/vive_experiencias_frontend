@@ -1,7 +1,11 @@
+import 'dart:convert'; // NUEVO
 import 'dart:typed_data';
+import 'package:http/http.dart' as http; // NUEVO
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/product_model.dart'; // Importamos tu modelo existente
+import 'package:vive_core/core/constants/app_data.dart'; // NUEVO
+import 'package:vive_core/core/utils/logger_service.dart';
+import '../models/product_model.dart';
 
 part 'product_repository.g.dart';
 
@@ -10,15 +14,15 @@ class ProductRepository {
 
   ProductRepository(this._client);
 
-  // 1. Subir Imagen al Storage
+  // ====================================================================
+  // 📸 MÉTODOS STORAGE
+  // ====================================================================
   Future<String> uploadProductImage(
     String fileName,
     Uint8List fileBytes,
   ) async {
     try {
-      final bucketName = 'products';
-      final path = '$bucketName/$fileName';
-
+      final path = 'products/$fileName';
       await _client.storage
           .from('products')
           .uploadBinary(
@@ -26,118 +30,145 @@ class ProductRepository {
             fileBytes,
             fileOptions: const FileOptions(upsert: true),
           );
-
-      // Obtener URL pública
-      return _client.storage.from(bucketName).getPublicUrl(path);
+      return _client.storage.from('products').getPublicUrl(path);
     } catch (e) {
-      print("⚠️ Error subiendo tapa: $e");
       throw Exception("Error subiendo imagen de producto");
     }
   }
 
-  // 2. Crear Producto (SOPORTE PARA MENÚS)
-  Future<void> createProduct(ProductModel product) async {
-    // A. Guardamos el PADRE (El Menú/Tapa)
-    final productMap = product.toJson();
-    productMap.remove('id'); // Dejamos que la DB genere el ID
-
-    productMap.remove('items'); 
-    productMap.remove('product_items'); 
-
-    // Insertamos y PEDIMOS QUE NOS DEVUELVA EL ID GENERADO
-    final response = await _client
-        .from('event_products')
-        .insert(productMap)
-        .select()
-        .single();
-    
-    final newProductId = response['id'] as int;
-
-    // B. Guardamos los HIJOS (Los Platos), si existen
-    if (product.items.isNotEmpty) {
-      final itemsToInsert = product.items.map((item) {
-        final json = item.toJson();
-        json['product_id'] = newProductId; // Vinculamos con el padre
-        return json;
-      }).toList();
-
-      await _client.from('product_items').insert(itemsToInsert);
-    }
-  }
-
-  // 3. Obtener Productos por Evento (Lectura CON ITEMS)
-  Future<List<ProductModel>> getProductsByEvent(int eventId) async {
-    try {
-      final response = await _client
-          .from('event_products')
-          // CLAVE: Pedimos todas las columnas (*) Y TAMBIÉN la tabla product_items
-          .select('*, product_items(*)')
-          .eq('event_id', eventId)
-          .order('name', ascending: true);
-
-      final data = List<Map<String, dynamic>>.from(response);
-      return data.map((json) => ProductModel.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Error cargando productos: $e');
-    }
-  }
-
-  // 4. Borrar Producto
-  Future<void> deleteProduct(int productId) async {
-    await _client.from('event_products').delete().eq('id', productId);
-  }
-
-  // BORRAR IMAGEN:
   Future<void> deleteProductImage(String imageUrl) async {
-    try{
+    try {
       final uri = Uri.parse(imageUrl);
       final fileName = uri.pathSegments.last;
       await _client.storage.from('products').remove([fileName]);
     } catch (e) {
-      print("⚠️ Error borrando imagen producto: $e");
+      Logger.error(
+        "⚠️ Error borrando imagen producto: $e",
+        "PRODUCT_REPOSITORY",
+      );
     }
   }
 
-  // 5. Actualizar Producto (SOPORTE PARA MENÚS)
+  // ====================================================================
+  // 📱 MÉTODOS DE LECTURA (APP) - 🔥 AHORA CONECTADOS A FASTAPI
+  // ====================================================================
+
+  // 3. Obtener Productos por Evento
+  Future<List<ProductModel>> getProductsByEvent(int eventId) async {
+    try {
+      Logger.info(
+        '🥘 Bajando Tapas del Evento $eventId desde FastAPI...',
+        "PRODUCT_REPOSITORY",
+      );
+
+      final url = Uri.parse('${AppData.apiUrl}/api/v1/products/$eventId');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        final List<dynamic> data = jsonResponse['data'];
+
+        // NOTA: FastAPI ahora mismo no devuelve los 'product_items' anidados (hijos).
+        // Mostraremos las tapas base. Lo mejoraremos cuando ataquemos el Admin.
+        return data.map((json) => ProductModel.fromJson(json)).toList();
+      } else {
+        throw Exception('Error de FastAPI: ${response.statusCode}');
+      }
+    } catch (e) {
+      Logger.error('⚠️ ERROR REMOTO (Tapas): $e', "PRODUCT_REPOSITORY");
+      throw Exception('Error cargando productos desde el servidor');
+    }
+  }
+
+  // ====================================================================
+  // 🛠️ MÉTODOS DE ADMINISTRACIÓN (CRUD) - AHORA VÍA FASTAPI
+  // ====================================================================
+
+  Future<void> createProduct(ProductModel product) async {
+    // 1. Conseguir el token del admin logueado
+    final token = _client.auth.currentSession?.accessToken;
+    if (token == null) throw Exception('No hay sesión activa.');
+
+    // 2. Preparar el JSON (Flutter llamará a product.toJson() y enviará todo,
+    // pero debemos asegurarnos de añadir 'items' que tu toJson actual ignoraba).
+    final data = product.toJson();
+    data.remove('id');
+    data['items'] = product.items.map((i) => i.toJson()).toList();
+
+    // 3. Enviar a FastAPI
+    final url = Uri.parse('${AppData.apiUrl}/api/v1/admin/products');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Error del servidor: ${response.body}');
+    }
+  }
+
   Future<void> updateProduct(ProductModel product) async {
-    // A. Actualizamos el PADRE
-    final map = product.toJson();
-    map.remove('id');
-    map.remove('items'); // Limpiamos para no ensuciar la query
-    map.remove('product_items');
+    final token = _client.auth.currentSession?.accessToken;
+    if (token == null) throw Exception('No hay sesión activa.');
 
-    await _client
-        .from('event_products')
-        .update(map)
-        .eq('id', product.id);
+    final data = product.toJson();
+    final productId = product.id;
+    data.remove('id');
+    data['items'] = product.items.map((i) => i.toJson()).toList();
 
-    // B. Actualizamos los HIJOS (Estrategia: Borrar todo y re-insertar)
-    // Es lo más sencillo para evitar lógica compleja de comparar qué plato cambió.
-    if (product.items.isNotEmpty) {
-      // 1. Borramos los platos viejos de este producto
-      await _client.from('product_items').delete().eq('product_id', product.id);
-      
-      // 2. Insertamos los nuevos (que vienen del formulario)
-      final itemsToInsert = product.items.map((item) {
-        final json = item.toJson();
-        json['product_id'] = product.id; // Mantenemos el ID del padre existente
-        return json;
-      }).toList();
+    final url = Uri.parse('${AppData.apiUrl}/api/v1/admin/products/$productId');
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(data),
+    );
 
-      await _client.from('product_items').insert(itemsToInsert);
-    } else {
-      // Si la lista viene vacía, nos aseguramos de borrar lo que hubiera (por si pasó de Menú a Tapa)
-      await _client.from('product_items').delete().eq('product_id', product.id);
+    if (response.statusCode != 200) {
+      throw Exception('Error del servidor: ${response.body}');
     }
   }
 
-  // Función para obtener TODOS los productos (CON ITEMS)
-  Future<List<ProductModel>> getAllProducts() async {
-    final response = await _client
-        .from('event_products')
-        .select('*, product_items(*)'); // <--- AÑADIR TAMBIÉN AQUÍ
+  // (El delete lo dejaremos por ahora directo a Supabase, o puedes migrarlo también)
+  Future<void> deleteProduct(int productId) async {
+    await _client.from('event_products').delete().eq('id', productId);
+  }
 
-    return response.map((json) => ProductModel.fromJson(json)).toList();
+  Future<List<ProductModel>> getAllProducts() async {
+    try {
+      final token = Supabase.instance.client.auth.currentSession?.accessToken;
+      if (token == null) return []; // Si no hay sesión, devolvemos vacío
+
+      // Llamamos a la ruta protegida que trae los productos de ESA ciudad
+      final url = Uri.parse('${AppData.apiUrl}/api/v1/admin/products');
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        final List<dynamic> data = jsonResponse['data'];
+        return data.map((e) => ProductModel.fromJson(e)).toList();
+      }
+      return [];
+    } catch (e) {
+      Logger.error(
+        'Error cargando todos los productos: $e',
+        'PRODUCT_REPOSITORY',
+      );
+      return [];
+    }
   }
 }
 

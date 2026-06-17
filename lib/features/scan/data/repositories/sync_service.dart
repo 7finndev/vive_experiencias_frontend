@@ -1,8 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:torre_del_mar_app/core/local_storage/local_db_service.dart';
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
-import 'package:torre_del_mar_app/features/scan/data/models/passport_entry_model.dart';
+import 'package:vive_core/core/local_storage/local_db_service.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/features/scan/data/models/passport_entry_model.dart';
 
 part 'sync_service.g.dart';
 
@@ -41,7 +42,7 @@ class SyncService {
               .maybeSingle();
 
           if (productData == null) {
-            print("⚠️ Error: No existe producto activo para el bar ${entry.establishmentName}");
+            Logger.error("⚠️ Error: No existe producto activo para el bar ${entry.establishmentName}", "SYNC_SERVICE");
             // Si no existe el producto, no podemos asignar el voto. Lo descartamos.
             keysToDelete.add(key);
             continue;
@@ -73,10 +74,10 @@ class SyncService {
           
           keysToDelete.add(key);
           uploadedCount++;
-          print("✅ Voto sincronizado: ${entry.establishmentName}");
+          Logger.info("✅ Voto sincronizado: ${entry.establishmentName}", "SYNC_SERVICE");
 
         } catch (e) {
-          print("⚠️ Error subiendo voto ${entry.establishmentName}: $e");
+          Logger.error("⚠️ Error subiendo voto ${entry.establishmentName}: $e", "SYNC_SERVICE");
           // Si es duplicado (ya votó antes), lo borramos de pendientes
           if (e.toString().contains("duplicate key") || e.toString().contains("23505")) {
              keysToDelete.add(key);
@@ -93,7 +94,7 @@ class SyncService {
     // Usamos la relación con event_products
     // =========================================================
     try {
-      print("⬇️ Descargando historial...");
+      Logger.info("⬇️ Descargando historial...", "SYNC_SERVICE");
       
       // Consulta con Relación Anidada:
       // passport_entries -> event_products -> establishments
@@ -175,10 +176,10 @@ class SyncService {
         await syncedBox.put(uniqueKey, downloadedEntry);
       }
       
-      print("✅ Sincronización completada. ${cloudEntries.length} votos recuperados.");
+      Logger.info("✅ Sincronización completada. ${cloudEntries.length} votos recuperados.", "SYNC_SERVICE");
 
     } catch (e) {
-      print("⚠️ Error bajando historial: $e");
+      Logger.error("⚠️ Error bajando historial: $e", "SYNC_SERVICE");
     }
 
     return uploadedCount;

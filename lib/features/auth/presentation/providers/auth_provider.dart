@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:torre_del_mar_app/features/auth/data/datasources/auth_service.dart';
-import 'package:torre_del_mar_app/features/auth/data/repositories/auth_repository.dart';
+import 'package:vive_core/features/auth/data/datasources/auth_service.dart';
+import 'package:vive_core/features/auth/data/repositories/auth_repository.dart';
 
 part 'auth_provider.g.dart';
 
@@ -25,8 +25,6 @@ Stream<User?> authState(AuthStateRef ref) {
   final repo = ref.watch(authRepositoryProvider);
   return repo.authStateChanges.map((event) => event.session?.user);
 }
-
-// ... (resto de tus providers arriba)
 
 // 4. Provider para obtener el ROL del usuario (Admin/User)
 @riverpod

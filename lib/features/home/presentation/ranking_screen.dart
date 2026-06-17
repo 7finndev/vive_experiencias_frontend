@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:torre_del_mar_app/core/widgets/web_container.dart';
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart'; // Necesario para el modelo
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
+import 'package:vive_core/core/widgets/web_container.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart'; // Necesario para el modelo
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
 
 class RankingScreen extends ConsumerStatefulWidget {
   const RankingScreen({super.key});
@@ -39,7 +40,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
-      print("Error cargando ranking: $e");
+      Logger.error("Error cargando ranking: $e", "RANKING_SCREEN");
     }
   }
 
@@ -156,7 +157,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05), 
+                                  color: Colors.black.withValues(alpha: 0.05), 
                                   blurRadius: 10, 
                                   offset: const Offset(0,4)
                                 )
@@ -195,7 +196,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                                   width: 80, 
                                   height: 100, 
                                   fit: BoxFit.cover,
-                                  errorWidget: (_,__,___) => Container(
+                                  errorWidget: (_,_,_) => Container(
                                     width: 80, 
                                     color: Colors.grey[200], 
                                     child: const Icon(Icons.restaurant, color: Colors.grey)

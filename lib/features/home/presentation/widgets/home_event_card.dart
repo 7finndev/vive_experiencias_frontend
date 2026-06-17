@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 // Asegúrate de importar tu nuevo SmartImageContainer
-import 'package:torre_del_mar_app/core/utils/smart_image_container.dart';
-import 'package:torre_del_mar_app/core/utils/event_type_helper.dart';
+import 'package:vive_core/core/utils/smart_image_container.dart';
+import 'package:vive_core/core/utils/event_type_helper.dart';
 
 class HomeEventCard extends StatelessWidget {
   final String title;
@@ -33,7 +33,7 @@ class HomeEventCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -61,7 +61,7 @@ class HomeEventCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.6), // Un poco de sombra abajo
+                      Colors.black.withValues(alpha: 0.6), // Un poco de sombra abajo
                     ],
                     stops: const [0.6, 1.0],
                   ),
@@ -80,13 +80,13 @@ class HomeEventCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       )
                     ],
                     border: Border.all(
-                        color: Colors.white.withOpacity(0.2), width: 1)),
+                        color: Colors.white.withValues(alpha: 0.2), width: 1)),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -139,7 +139,7 @@ class HomeEventCard extends StatelessWidget {
                       Shadow(
                         offset: const Offset(2, 2),
                         blurRadius: 4.0,
-                        color: Colors.black.withOpacity(0.9),
+                        color: Colors.black.withValues(alpha: 0.9),
                       ),
                     ],
                   ),

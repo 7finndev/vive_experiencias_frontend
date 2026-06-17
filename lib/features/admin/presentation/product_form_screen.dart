@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:torre_del_mar_app/core/utils/image_helper.dart';
-import 'package:torre_del_mar_app/features/home/data/repositories/establishment_repository.dart';
-import 'package:torre_del_mar_app/features/home/data/repositories/product_repository.dart';
-import 'package:torre_del_mar_app/features/home/data/models/product_model.dart';
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
-import 'package:torre_del_mar_app/features/admin/presentation/controllers/product_form_controller.dart';
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart'
+import 'package:vive_core/core/utils/image_helper.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
+import 'package:vive_core/features/home/data/repositories/establishment_repository.dart';
+import 'package:vive_core/features/home/data/repositories/product_repository.dart';
+import 'package:vive_core/features/home/data/models/product_model.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/features/admin/presentation/controllers/product_form_controller.dart';
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart'
     hide establishmentRepositoryProvider;
 import 'package:uuid/uuid.dart';
 
@@ -139,7 +140,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   _hasInitializedPrice =
                       true; // Marcamos como hecho para que no se repita
                 });
-                print("✅ Precio automático aplicado: ${event.basePrice}€");
+                Logger.info("✅ Precio automático aplicado: ${event.basePrice}€", "PRODUCT_FORM_SCREEN");
               }
             });
           }
@@ -365,17 +366,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             foregroundColor: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          "💡 Recomendado: Formato cuadrado (800x800 px). Se optimizará a Calidad 75%.",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                            fontStyle: FontStyle.italic,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
                       ],
+                    ),
+                    // Sacamos el texto fuera del Row para que se coloque debajo
+                    const SizedBox(height: 8),
+                    const Text(
+                      "💡 Recomendado: Formato cuadrado (800x800 px). Se optimizará a Calidad 75%.",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      textAlign: TextAlign.left,
                     ),
                     const SizedBox(height: 10),
 

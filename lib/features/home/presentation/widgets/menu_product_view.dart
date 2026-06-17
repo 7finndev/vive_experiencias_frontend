@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:torre_del_mar_app/features/home/data/models/product_model.dart';
-import 'package:torre_del_mar_app/features/home/data/models/product_item_model.dart';
+import 'package:vive_core/features/home/data/models/product_model.dart';
+import 'package:vive_core/features/home/data/models/product_item_model.dart';
 
 class MenuProductView extends StatelessWidget {
   final ProductModel product;
@@ -20,7 +20,7 @@ class MenuProductView extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         // Sombra para darle profundidad
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, offset: const Offset(0, 5)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 10, offset: const Offset(0, 5)),
         ],
         // IMAGEN DE FONDO (Si existe)
         image: product.imageUrl != null
@@ -28,7 +28,7 @@ class MenuProductView extends StatelessWidget {
                 image: NetworkImage(product.imageUrl!),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.7), // Oscurecemos la imagen para leer el texto
+                  Colors.black.withValues(alpha: 0.7), // Oscurecemos la imagen para leer el texto
                   BlendMode.darken,
                 ),
               )
@@ -61,9 +61,9 @@ class MenuProductView extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                border: Border.all(color: goldColor.withOpacity(0.5)),
+                border: Border.all(color: goldColor.withValues(alpha: 0.5)),
                 borderRadius: BorderRadius.circular(20),
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
               ),
               child: Text(
                 "${product.price?.toStringAsFixed(2)} € / p.p.",
@@ -105,7 +105,7 @@ class MenuProductView extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.white12),
               ),
@@ -152,7 +152,7 @@ class MenuProductView extends StatelessWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: _getColorForCourse(item.courseType).withOpacity(0.2),
+              color: _getColorForCourse(item.courseType).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.white10),
             ),

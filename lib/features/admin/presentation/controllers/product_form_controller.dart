@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:torre_del_mar_app/features/home/data/models/product_model.dart';
-import 'package:torre_del_mar_app/features/home/data/models/product_item_model.dart';
-import 'package:torre_del_mar_app/features/home/data/repositories/product_repository.dart';
+import 'package:vive_core/features/home/data/models/product_model.dart';
+import 'package:vive_core/features/home/data/models/product_item_model.dart';
+import 'package:vive_core/features/home/data/repositories/product_repository.dart';
 
 part 'product_form_controller.g.dart';
 

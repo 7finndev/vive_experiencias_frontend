@@ -1,6 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:torre_del_mar_app/core/utils/image_picker_widget.dart'; // Asegúrate de tener este import
+import 'package:vive_core/core/constants/app_data.dart';
+import 'package:vive_core/core/utils/image_picker_widget.dart';
+import 'package:vive_core/core/utils/logger_service.dart'; // Asegúrate de tener este import
 
 class AdminUsersScreen extends StatefulWidget {
   const AdminUsersScreen({super.key});
@@ -26,20 +31,26 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      final response = await Supabase.instance.client
-          .from('profiles')
-          .select('*')
-          .order('created_at', ascending: false);
+      final token = Supabase.instance.client.auth.currentSession?.accessToken;
+      if (token == null) throw Exception("Sesión expirada");
 
-      if (mounted) {
-        setState(() {
-          _allUsers = List<Map<String, dynamic>>.from(response);
-          _filterList(_searchQuery); // Re-aplicar filtro si existía
-          _isLoading = false;
-        });
+      final url = Uri.parse('${AppData.apiUrl}/api/v1/admin/users');
+      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            _allUsers = List<Map<String, dynamic>>.from(json['data']);
+            _filterList(_searchQuery);
+            _isLoading = false;
+          });
+        }
+      } else {
+        throw Exception("Error de servidor: ${response.statusCode}");
       }
     } catch (e) {
-      debugPrint("Error cargando: $e");
+      Logger.error("Error cargando: $e", "ADMIN_USERS_SCREEN");
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -58,33 +69,27 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   // --- LÓGICA DE ACTUALIZACIÓN DE ROL ---
   Future<void> _updateUserRole(String userId, String newRole, {String? newName, String? newAvatar}) async {
     try {
-      final updates = {
-        'role': newRole,
-        'updated_at': DateTime.now().toIso8601String(),
-      };
+      final token = Supabase.instance.client.auth.currentSession?.accessToken;
+      final updates = {'role': newRole};
       if (newName != null) updates['full_name'] = newName;
       if (newAvatar != null) updates['avatar_url'] = newAvatar;
 
-      await Supabase.instance.client
-          .from('profiles')
-          .update(updates)
-          .eq('id', userId);
+      final url = Uri.parse('${AppData.apiUrl}/api/v1/admin/users/$userId');
+      final response = await http.put(
+        url, 
+        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
+        body: jsonEncode(updates)
+      );
 
-      await _loadAllUsers(); // 🔥 Recarga forzosa para confirmar que la DB cambió
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Usuario actualizado a: ${newRole.toUpperCase()}"), backgroundColor: Colors.green),
-        );
+      if (response.statusCode == 200) {
+        await _loadAllUsers(); 
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Usuario actualizado a: ${newRole.toUpperCase()}"), backgroundColor: Colors.green));
+      } else {
+        throw Exception(response.body);
       }
     } catch (e) {
-      // Si falla (por ejemplo, por RLS), recargamos para deshacer el cambio visual falso
       await _loadAllUsers();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error al guardar (Revisa permisos SQL): $e"), backgroundColor: Colors.red),
-        );
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
     }
   }
 
@@ -153,33 +158,42 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     );
   }
 
-  // --- BORRAR ---
+  // --- BORRAR (SOFT DELETE VÍA FASTAPI) ---
   Future<void> _deleteUser(String id) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("¿Estás seguro?"),
-        content: const Text("Se borrará el perfil de este usuario, pero sus votos se mantendrán para no alterar el concurso."),
+        content: const Text("Se desactivará el perfil de este usuario, pero sus votos se mantendrán para no alterar el concurso."),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancelar")),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Borrar", style: TextStyle(color: Colors.red))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Desactivar", style: TextStyle(color: Colors.red))),
         ],
       ),
     );
 
     if (confirm == true) {
       try {
-        //Comentamo esta linea por nueva estrategia
-        //await Supabase.instance.client.from('profiles').delete().eq('id', id);
-        // Nueva Estrategia (SOFT DELETE):
-        await Supabase.instance.client.from('profiles').update({
-          'is_active': false, //Lo marcamos como inactivo
-          'deleted_at': DateTime.now().toIso8601String(), //Guardamos la fecha
-        }).eq('id', id);
-        await _loadAllUsers();
-        if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Eliminado")));
+        // 1. Obtenemos el token de seguridad
+        final token = Supabase.instance.client.auth.currentSession?.accessToken;
+        if (token == null) throw Exception("Sesión expirada");
+
+        // 2. Llamamos a FastAPI para que actualice el campo is_active a false
+        final url = Uri.parse('${AppData.apiUrl}/api/v1/admin/users/$id');
+        final response = await http.put(
+          url, 
+          headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
+          body: jsonEncode({'is_active': false}) // 🔥 El Soft Delete
+        );
+
+        if (response.statusCode == 200) {
+          await _loadAllUsers(); // Refrescamos la lista
+          if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Usuario desactivado"), backgroundColor: Colors.orange));
+        } else {
+          throw Exception("Error de servidor: ${response.body}");
+        }
       } catch (e) {
-        if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+        if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
       }
     }
   }
@@ -229,7 +243,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: _filteredUsers.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final user = _filteredUsers[index];
                           
@@ -274,7 +288,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               // --- CORRECCIÓN: MOSTRAR AVATAR SI EXISTE ---
                               leading: CircleAvatar(
                                 radius: 24,
-                                backgroundColor: color.withOpacity(0.1),
+                                backgroundColor: color.withValues(alpha: 0.1),
                                 // Si hay URL válida, la usamos como fondo
                                 backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty) 
                                     ? NetworkImage(avatarUrl) 
@@ -299,7 +313,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                     Container(
                                       margin: const EdgeInsets.only(top: 4),
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                                      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
                                       child: Text(role.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
                                     )
                                 ],

@@ -156,7 +156,7 @@ class _PassportProviderElement
   int get eventId => (origin as PassportProvider).eventId;
 }
 
-String _$hasStampHash() => r'af65996796ce060798be2467cdf788b4daf1577c';
+String _$hasStampHash() => r'910b70d0a87a2dfef09377a5463c32503e9b2ba8';
 
 /// See also [hasStamp].
 @ProviderFor(hasStamp)

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:torre_del_mar_app/features/admin/data/dashboard_repository.dart';
-import 'package:torre_del_mar_app/features/home/data/models/event_model.dart';
+import 'package:vive_core/features/admin/data/dashboard_repository.dart';
+import 'package:vive_core/features/home/data/models/event_model.dart';
 
 // -----------------------------------------------------------------------------
 // 1. PROVIDER DE ESTADO (UI): ¿Qué evento está seleccionado en el dropdown?

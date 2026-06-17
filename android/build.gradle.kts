@@ -7,7 +7,7 @@ buildscript {
     dependencies {
         // Esta línea permite que el plugin de Firebase sea encontrado
         // Nota el uso de paréntesis y comillas dobles (Sintaxis Kotlin)
-        classpath("com.google.gms:google-services:4.4.2")
+        // classpath("com.google.gms:google-services:4.4.2")
     }
 }
 // --------------------------------------

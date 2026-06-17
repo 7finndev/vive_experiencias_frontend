@@ -7,7 +7,7 @@ class SmartImageContainer extends StatelessWidget {
   final double borderRadius;
   final double? width;
   final double? height;
-  final bool useBlurBackground; // <--- NUEVO TRUCO
+  final bool useBlurBackground; 
 
   const SmartImageContainer({
     super.key,
@@ -47,13 +47,12 @@ class SmartImageContainer extends StatelessWidget {
             
             // CAPA 2: OSCURECIMIENTO LIGERO (Para resaltar la imagen principal)
             if (useBlurBackground)
-              Container(color: Colors.black.withOpacity(0.3)),
+              Container(color: Colors.black.withValues(alpha: 0.3)),
 
             // CAPA 3: LA IMAGEN REAL (Entera, sin recortar nada)
             CachedNetworkImage(
               imageUrl: imageUrl!,
-              // AQUÍ ESTÁ LA CLAVE: 'contain' muestra TODO el texto, 'cover' recorta.
-              // Al tener el fondo borroso, 'contain' ya no queda feo.
+              // 'contain' muestra TODO el texto, 'cover' recorta.
               fit: BoxFit.contain, 
               placeholder: (context, url) => Container(
                 color: Colors.grey[200],

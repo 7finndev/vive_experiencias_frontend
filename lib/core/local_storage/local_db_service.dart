@@ -1,13 +1,14 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/foundation.dart'; 
 import 'package:path_provider/path_provider.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
 import 'dart:io' show Platform, Directory;
 
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
-import 'package:torre_del_mar_app/features/home/data/models/event_model.dart';
-import 'package:torre_del_mar_app/features/home/data/models/product_item_model.dart';
-import 'package:torre_del_mar_app/features/scan/data/models/passport_entry_model.dart';
-import 'package:torre_del_mar_app/features/home/data/models/product_model.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/features/home/data/models/event_model.dart';
+import 'package:vive_core/features/home/data/models/product_item_model.dart';
+import 'package:vive_core/features/scan/data/models/passport_entry_model.dart';
+import 'package:vive_core/features/home/data/models/product_model.dart';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
@@ -33,7 +34,7 @@ class LocalDbService {
     // --- LÓGICA DE INICIALIZACIÓN HÍBRIDA ---
     if (kIsWeb) {
       await Hive.initFlutter();
-      print("🌐 Base de datos iniciada en Navegador (IndexedDB)");
+      Logger.info("🌐 Base de datos iniciada en Navegador (IndexedDB)", "LOCAL_DB");
     } else {
       Directory dir;
       if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
@@ -42,7 +43,7 @@ class LocalDbService {
         dir = await getApplicationDocumentsDirectory();
       }
       await Hive.initFlutter(dir.path);
-      print("📂 Base de datos local guardada en: ${dir.path}");
+      Logger.info("📂 Base de datos local guardada en: ${dir.path}", "LOCAL_DB");
     }
 
     // --- REGISTRO DE ADAPTADORES ---
@@ -64,25 +65,25 @@ class LocalDbService {
     await _openBoxSafely(eventsCacheBoxName);
     await _openBoxSafely(sponsorsCacheBoxName);
     
-    print("✅ Local Database initialized.");
+    Logger.info("✅ Local Database initialized.", "LOCAL_DB");
   }
 
   Future<void> _openBoxSafely(String boxName) async {
     try {
       await Hive.openBox(boxName);
     } catch (e) {
-        print('⚠️ Error crítico abriendo "$boxName": $e');
-        print('🗑️ Procediendo a eliminar y recrear la caja...');
+        Logger.error('⚠️ Error crítico abriendo "$boxName": $e', "LOCAL_DB");
+        Logger.info('🗑️ Procediendo a eliminar y recrear la caja...', "LOCAL_DB");
       try {
         await Hive.deleteBoxFromDisk(boxName);
       } catch (eDelete) {
-        print('ℹ️ No se pudo borrar la caja: $eDelete');
+        Logger.warning('ℹ️ No se pudo borrar la caja: $eDelete', "LOCAL_DB");
       }
       try {
         await Hive.openBox(boxName);
-        print('✅ Caja "$boxName" recreada con éxito.');
+        Logger.info('✅ Caja "$boxName" recreada con éxito.', "LOCAL_DB");
       } catch (e2) {
-        print('❌ ERROR FATAL: No se pudo recrear la caja "$boxName": $e2');
+        Logger.error('❌ ERROR FATAL: No se pudo recrear la caja "$boxName": $e2', "LOCAL_DB");
       }
     }
   }
@@ -109,9 +110,9 @@ class LocalDbService {
     if(deviceId == null){
       deviceId = const Uuid().v4();
       _appSettingsBox.put('device_uuid', deviceId);
-      print("🆕 Asignado nuevo Device ID: $deviceId");
+      Logger.info("🆕 Asignado nuevo Device ID: $deviceId", "LOCAL_DB");
     } else {
-      print("🆔 Device ID recuperado: $deviceId");
+      Logger.info("🆔 Device ID recuperado: $deviceId", "LOCAL_DB");
     }
     return deviceId;
   }

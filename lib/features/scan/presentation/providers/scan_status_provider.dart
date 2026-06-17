@@ -1,7 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:torre_del_mar_app/core/local_storage/local_db_service.dart';
-import 'package:torre_del_mar_app/features/scan/data/models/passport_entry_model.dart';
+import 'package:vive_core/core/local_storage/local_db_service.dart';
+import 'package:vive_core/features/scan/data/models/passport_entry_model.dart';
 
 part 'scan_status_provider.g.dart';
 

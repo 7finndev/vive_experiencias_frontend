@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart'; 
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:torre_del_mar_app/core/local_storage/local_db_service.dart';
+import 'package:vive_core/core/local_storage/local_db_service.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
 
 class AnalyticsService {
   static final SupabaseClient _supabase = Supabase.instance.client;
@@ -18,7 +19,7 @@ class AnalyticsService {
       final user = _supabase.auth.currentUser;
       final String? userId = forceUserId ?? user?.id;
 
-      print("🔍 Analytics Debug: Intentando vincular Device $deviceId con User $userId");
+      Logger.info("🔍 Analytics Debug: Intentando vincular Device $deviceId con User $userId", "ANALYTICS_SERVICE");
 
       String os = 'desconocido';
       String model = 'genérico';
@@ -83,10 +84,10 @@ class AnalyticsService {
         onConflict: 'device_id',
       );
 
-      print("📊 Analytics: Dispositivo registrado ($os) -> User: $userId");
+      Logger.info("📊 Analytics: Dispositivo registrado ($os) -> User: $userId", "ANALYTICS_SERVICE");
 
     } catch (e) {
-      print("⚠️ Error en Analytics: $e");
+      Logger.error("⚠️ Error en Analytics: $e", "ANALYTICS_SERVICE");
     }
   }
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
-import 'package:torre_del_mar_app/features/home/data/repositories/establishment_repository.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/features/home/data/repositories/establishment_repository.dart';
 // Ya no necesitamos importar la pantalla del formulario directamente
 // import 'establishment_form_screen.dart'; 
 
@@ -72,6 +72,7 @@ class _AdminEstablishmentsScreenState extends ConsumerState<AdminEstablishmentsS
       
       // BOTÓN FLOTANTE CORREGIDO CON GOROUTER
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_add_establishment', // Evita conflictos si hay varios FAB
         icon: const Icon(Icons.add),
         label: const Text('NUEVO SOCIO'),
         // Usamos el color del tema (Naranja) en lugar de hardcodear BlueGrey
@@ -175,7 +176,7 @@ class _AdminEstablishmentsScreenState extends ConsumerState<AdminEstablishmentsS
                             color: Colors.green[100],
                             borderRadius: BorderRadius.circular(4)
                           ),
-                          child: const Text("Socio ACET", style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold)),
+                          child: const Text("ACTIVO", style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold)),
                         )
                     ],
                   ),

@@ -4,11 +4,12 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:torre_del_mar_app/core/utils/image_helper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vive_core/core/utils/image_helper.dart';
 import 'package:uuid/uuid.dart';
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
-import 'package:torre_del_mar_app/features/home/data/repositories/establishment_repository.dart';
-import 'package:torre_del_mar_app/core/utils/geocoding_helper.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/features/home/data/repositories/establishment_repository.dart';
+import 'package:vive_core/core/utils/geocoding_helper.dart';
 
 class EstablishmentFormScreen extends ConsumerStatefulWidget {
   final EstablishmentModel? establishmentToEdit;
@@ -115,16 +116,16 @@ class _EstablishmentFormScreenState
   Future<void> _findCoordinates() async {
     if (_addressController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Escribe una dirección primero")),
+        const SnackBar(content: Text("Escribe una dirección primero (Ej: Calle Sol 4, Nerja)")),
       );
       return;
     }
     setState(() => _isGeocoding = true);
 
     String query = _addressController.text.trim();
-    if (!query.toLowerCase().contains("málaga") &&
-        !query.toLowerCase().contains("españa")) {
-      query = "$query, Málaga, España";
+    // 🔥 CORRECCIÓN: Solo añadimos España para no confundir al GPS con la provincia
+    if (!query.toLowerCase().contains("españa")) {
+      query = "$query, España";
     }
 
     final coords = await GeocodingHelper.getCoordinatesFromAddress(query);
@@ -144,9 +145,8 @@ class _EstablishmentFormScreenState
           ),
         );
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("⚠️ No encontrada.")));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("⚠️ No encontrada. Revisa la ciudad.")));
       }
     }
   }
@@ -220,6 +220,18 @@ class _EstablishmentFormScreenState
                 label: "Teléfono Público (Reservas)",
                 icon: Icons.phone,
                 type: TextInputType.phone,
+              ),
+              const SizedBox(height: 15),
+              // 🔥 CAMPO AÑADIDO: Horario
+              TextFormField(
+                controller: _scheduleController,
+                decoration: const InputDecoration(
+                  labelText: "Horarios de Apertura (Texto libre)",
+                  hintText: "Ej: L a J: 12-16h / V y S: 12-23h / D: Cerrado",
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.access_time, color: Colors.grey),
+                ),
+                maxLines: 2, // Le damos 2 líneas para que se pueda explayar
               ),
               const SizedBox(height: 15),
               TextFormField(
@@ -549,15 +561,15 @@ class _EstablishmentFormScreenState
                     //1.-Switch: Socio ACET
                     SwitchListTile(
                       title: const Text(
-                        "Socio ACET",
+                        "Participación Activa",
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: const Text(
-                        "Indica si el establecimiento es miembro de la asocición.",
+                        "Activa este switch para que el local aparezca en la ruta.",
                         style: TextStyle(fontSize: 12),
                       ),
                       value: _isPartner,
-                      activeColor: Colors.blue,
+                      activeThumbColor: Colors.blue,
                       secondary: const Icon(Icons.verified_user, color: Colors.blue),
                       onChanged: (val) => setState(() => _isPartner = val),
                     ),
@@ -577,7 +589,7 @@ class _EstablishmentFormScreenState
 
                       ),
                       value: _isActive,
-                      activeColor: Colors.green,
+                      activeThumbColor: Colors.green,
                       secondary: Icon(
                         Icons.store,
                         color: _isActive ? Colors.green : Colors.grey
@@ -628,7 +640,7 @@ class _EstablishmentFormScreenState
                                     child: Image.network(
                                       _imageController.text,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) =>
+                                      errorBuilder: (_, _, _) =>
                                           const Icon(Icons.broken_image),
                                     ),
                                   )
@@ -684,6 +696,12 @@ class _EstablishmentFormScreenState
 
     try {
       final repo = ref.read(establishmentRepositoryProvider);
+
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+      final profile = await supabase.from('profiles').select('city_id').eq('id', user!.id).single();
+      final adminCityId = profile['city_id'];
+
       String? finalImageUrl = _imageController.text.isNotEmpty
           ? _imageController.text
           : null;
@@ -704,13 +722,16 @@ class _EstablishmentFormScreenState
 
       double? lat;
       double? lng;
-      if (_latController.text.isNotEmpty)
+      if (_latController.text.isNotEmpty) {
         lat = double.tryParse(_latController.text.replaceAll(',', '.'));
-      if (_lngController.text.isNotEmpty)
+      }
+      if (_lngController.text.isNotEmpty) {
         lng = double.tryParse(_lngController.text.replaceAll(',', '.'));
+      }
 
       final establishment = EstablishmentModel(
         id: widget.establishmentToEdit?.id ?? 0,
+        cityId: adminCityId, // Asignamos la ciudad del admin
         name: _nameController.text,
         address: _addressController.text,
         description: _descController.text,
@@ -748,10 +769,11 @@ class _EstablishmentFormScreenState
         );
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

@@ -8,7 +8,7 @@ class EventTypeHelper {
       
       // --- GRUPO GASTRONÓMICO ---
       case 'tapa':
-      case 'gastronomic': // Por si acaso tienes alguno antiguo con este nombre
+      case 'gastronomic': // Por si acaso hay alguno antiguo con este nombre
         return (
           label: 'Gastronomic',
           color: Colors.orange.shade800,

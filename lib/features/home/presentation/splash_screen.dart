@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:torre_del_mar_app/core/widgets/responsive_center.dart';
+import 'package:vive_core/core/widgets/responsive_center.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -40,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen> {
               // LOGO COMPLETO (Con Texto)
               // Aquí SÍ se redimensiona solo gracias a Flutter
               Image.asset(
-                'assets/images/splash_logo_ACET.png', 
+                'assets/images/app_logo.png', 
                 fit: BoxFit.contain, // <--- Se ajusta sin cortarse
               ),
               const SizedBox(height: 20),

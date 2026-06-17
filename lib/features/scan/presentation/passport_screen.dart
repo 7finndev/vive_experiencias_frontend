@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:torre_del_mar_app/core/local_storage/local_db_service.dart';
-import 'package:torre_del_mar_app/core/widgets/responsive_center.dart';
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart'; 
-import 'package:torre_del_mar_app/features/scan/data/models/passport_entry_model.dart';
+import 'package:vive_core/core/local_storage/local_db_service.dart';
+import 'package:vive_core/core/widgets/responsive_center.dart';
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart'; 
+import 'package:vive_core/features/scan/data/models/passport_entry_model.dart';
 
 class PassportScreen extends ConsumerWidget {
   const PassportScreen({super.key});

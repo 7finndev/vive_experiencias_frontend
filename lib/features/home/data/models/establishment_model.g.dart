@@ -39,13 +39,14 @@ class EstablishmentModelAdapter extends TypeAdapter<EstablishmentModel> {
       instagram: fields[19] as String?,
       products: (fields[20] as List?)?.cast<ProductModel>(),
       waiterPin: fields[21] as String?,
+      cityId: fields[22] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, EstablishmentModel obj) {
     writer
-      ..writeByte(22)
+      ..writeByte(23)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -89,7 +90,9 @@ class EstablishmentModelAdapter extends TypeAdapter<EstablishmentModel> {
       ..writeByte(20)
       ..write(obj.products)
       ..writeByte(21)
-      ..write(obj.waiterPin);
+      ..write(obj.waiterPin)
+      ..writeByte(22)
+      ..write(obj.cityId);
   }
 
   @override
@@ -112,8 +115,8 @@ EstablishmentModel _$EstablishmentModelFromJson(Map<String, dynamic> json) =>
       id: (json['id'] as num).toInt(),
       name: json['name'] as String,
       address: json['address'] as String?,
-      latitude: (json['gps_lat'] as num?)?.toDouble(),
-      longitude: (json['gps_lng'] as num?)?.toDouble(),
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       qrUuid: json['qr_uuid'] as String,
       isActive: json['is_active'] as bool,
       googlePlaceId: json['google_place_id'] as String?,
@@ -133,6 +136,7 @@ EstablishmentModel _$EstablishmentModelFromJson(Map<String, dynamic> json) =>
           ?.map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
           .toList(),
       waiterPin: json['waiter_pin'] as String?,
+      cityId: (json['city_id'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$EstablishmentModelToJson(EstablishmentModel instance) =>
@@ -140,8 +144,8 @@ Map<String, dynamic> _$EstablishmentModelToJson(EstablishmentModel instance) =>
       'id': instance.id,
       'name': instance.name,
       'address': instance.address,
-      'gps_lat': instance.latitude,
-      'gps_lng': instance.longitude,
+      'latitude': instance.latitude,
+      'longitude': instance.longitude,
       'qr_uuid': instance.qrUuid,
       'is_active': instance.isActive,
       'google_place_id': instance.googlePlaceId,
@@ -158,4 +162,5 @@ Map<String, dynamic> _$EstablishmentModelToJson(EstablishmentModel instance) =>
       'facebook': instance.facebook,
       'instagram': instance.instagram,
       'waiter_pin': instance.waiterPin,
+      'city_id': instance.cityId,
     };

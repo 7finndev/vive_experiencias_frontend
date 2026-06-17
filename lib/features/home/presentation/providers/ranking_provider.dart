@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:torre_del_mar_app/features/home/data/models/ranking_item_model.dart';
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart';
+import 'package:vive_core/features/home/data/models/ranking_item_model.dart';
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
 
 part 'ranking_provider.g.dart';
 

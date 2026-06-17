@@ -7,7 +7,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:torre_del_mar_app/features/home/presentation/widgets/menu_product_view.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
+import 'package:vive_core/features/home/presentation/widgets/menu_product_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -15,21 +16,21 @@ import 'package:geolocator/geolocator.dart';
 import 'package:share_plus/share_plus.dart';
 
 // CORE & WIDGETS
-import 'package:torre_del_mar_app/core/widgets/web_container.dart'; // <--- USAMOS ESTE AHORA
-import 'package:torre_del_mar_app/core/utils/smart_image_container.dart';
-import 'package:torre_del_mar_app/core/widgets/error_view.dart';
+import 'package:vive_core/core/widgets/web_container.dart'; // <--- USAMOS ESTE AHORA
+import 'package:vive_core/core/utils/smart_image_container.dart';
+import 'package:vive_core/core/widgets/error_view.dart';
 
 // MODELOS
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
-import 'package:torre_del_mar_app/features/home/data/models/product_model.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/features/home/data/models/product_model.dart';
 
 // PROVIDERS
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart';
-import 'package:torre_del_mar_app/features/scan/presentation/providers/scan_status_provider.dart';
-import 'package:torre_del_mar_app/features/scan/presentation/providers/sync_provider.dart';
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
+import 'package:vive_core/features/scan/presentation/providers/scan_status_provider.dart';
+import 'package:vive_core/features/scan/presentation/providers/sync_provider.dart';
 
 // WIDGETS AUXILIARES
-import 'package:torre_del_mar_app/features/scan/presentation/widgets/star_rating_selector.dart';
+import 'package:vive_core/features/scan/presentation/widgets/star_rating_selector.dart';
 
 class EstablishmentDetailScreen extends ConsumerStatefulWidget {
   final EstablishmentModel establishment;
@@ -185,7 +186,7 @@ class _EstablishmentDetailScreenState extends ConsumerState<EstablishmentDetailS
               fit: StackFit.expand,
               children: [
                 SmartImageContainer(imageUrl: widget.establishment.coverImage, borderRadius: 0),
-                Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.7)]))),
+                Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)]))),
               ],
             ),
           ),
@@ -535,7 +536,28 @@ class _EstablishmentDetailScreenState extends ConsumerState<EstablishmentDetailS
   }
 
   Widget _buildMapSection({required double height}) {
-    if (widget.establishment.latitude == null) return const SizedBox();
+    // 🔥 1. SI NO HAY COORDENADAS: Mostramos la tarjeta elegante
+    if (widget.establishment.latitude == null || widget.establishment.longitude == null) {
+      return Container(
+        height: 100,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey[300]!)
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.location_off, color: Colors.grey, size: 30),
+            SizedBox(height: 8),
+            Text("Ubicación exacta no disponible", style: TextStyle(color: Colors.grey)),
+          ],
+        )
+      );
+    }
+
+    // 🔥 2. SI SÍ HAY COORDENADAS: Mostramos el mapa interactivo (Tu código original)
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -674,7 +696,7 @@ class _EstablishmentDetailScreenState extends ConsumerState<EstablishmentDetailS
                     });
                   }
                 } catch (e) {
-                  print("Error PIN: $e");
+                  Logger.error("Error PIN: $e", "ESTABLISHMENT_DETAIL_SCREEN");
                   setDialogState(() {
                     loading = false;
                     errorText = "Error de conexión";
@@ -702,16 +724,34 @@ class _ActionButton extends StatelessWidget {
   const _ActionButton({required this.icon, required this.label, required this.onTap, this.color = Colors.orange});
   @override
   Widget build(BuildContext context) {
-    return Column(children: [InkWell(onTap: onTap, child: CircleAvatar(radius: 26, backgroundColor: color.withOpacity(0.1), child: Icon(icon, color: color, size: 24))), const SizedBox(height: 6), Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black54))]);
+    return Column(children: [InkWell(onTap: onTap, child: CircleAvatar(radius: 26, backgroundColor: color.withValues(alpha: 0.1), child: Icon(icon, color: color, size: 24))), const SizedBox(height: 6), Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black54))]);
   }
 }
 
 class _SocialButton extends StatelessWidget {
-  final IconData icon; final Color color; final VoidCallback onTap;
+  final dynamic icon; // <--- LA CLAVE: Cambiado de IconData a dynamic
+  final Color color; 
+  final VoidCallback onTap;
+  
   const _SocialButton({required this.icon, required this.color, required this.onTap});
+  
   @override
   Widget build(BuildContext context) {
-    return Padding(padding: const EdgeInsets.only(right: 12), child: InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.all(10), decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)]), child: Icon(icon, color: color, size: 22))));
+    return Padding(
+      padding: const EdgeInsets.only(right: 12), 
+      child: InkWell(
+        onTap: onTap, 
+        child: Container(
+          padding: const EdgeInsets.all(10), 
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle, 
+            color: Colors.white, 
+            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)]
+          ), 
+          child: FaIcon(icon, color: color, size: 22) // Usamos FaIcon
+        )
+      )
+    );
   }
 }
 

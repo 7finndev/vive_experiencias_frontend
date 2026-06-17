@@ -5,10 +5,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart'; // Para generar nombres únicos
 
 // IMPORTS PROPIOS
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart';
-import 'package:torre_del_mar_app/features/home/data/models/sponsor_model.dart';
-import 'package:torre_del_mar_app/features/home/data/repositories/sponsor_repository.dart';
-import 'package:torre_del_mar_app/core/utils/image_helper.dart';
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
+import 'package:vive_core/features/home/data/models/sponsor_model.dart';
+import 'package:vive_core/features/home/data/repositories/sponsor_repository.dart';
+import 'package:vive_core/core/utils/image_helper.dart';
 
 class AdminSponsorsScreen extends ConsumerStatefulWidget {
   const AdminSponsorsScreen({super.key});
@@ -137,7 +137,7 @@ class _AdminSponsorsScreenState extends ConsumerState<AdminSponsorsScreen> {
                   finalUrl = await repo.uploadSponsorLogo(fileName, newLogoBytes!);
                 }
 
-                // 2. PREPARAR DATOS
+                // 2. PREPARAR DATOS (Enviamos el diccionario tal cual lo espera tu repositorio)
                 final data = {
                   'name': nameCtrl.text.trim(),
                   'logo_url': finalUrl,
@@ -314,6 +314,7 @@ class _AdminSponsorsScreenState extends ConsumerState<AdminSponsorsScreen> {
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_add_sponsor', // Evita conflictos si hay varios FAB
         onPressed: () => _showSponsorForm(),
         backgroundColor: Colors.indigo,
         icon: const Icon(Icons.add, color: Colors.white),
@@ -391,7 +392,7 @@ class _AdminSponsorsScreenState extends ConsumerState<AdminSponsorsScreen> {
                                     child: Image.network(
                                       sponsor.logoUrl, 
                                       fit: BoxFit.contain,
-                                      errorBuilder: (_,__,___) => const Icon(Icons.broken_image, color: Colors.grey),
+                                      errorBuilder: (_,_,_) => const Icon(Icons.broken_image, color: Colors.grey),
                                     ),
                                   ),
                                   const SizedBox(width: 16),

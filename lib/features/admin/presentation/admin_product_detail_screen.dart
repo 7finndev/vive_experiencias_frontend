@@ -2,12 +2,12 @@ import 'dart:ui'; // <--- IMPORTANTE PARA EL EFECTO CINE
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:torre_del_mar_app/features/admin/presentation/providers/admin_products_providers.dart';
-import 'package:torre_del_mar_app/features/home/data/models/product_model.dart';
+import 'package:vive_core/features/admin/presentation/providers/admin_products_providers.dart';
+import 'package:vive_core/features/home/data/models/product_model.dart';
 // 🔥 1. IMPORTAMOS EL MODELO DE ESTABLECIMIENTO
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
 
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart';
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
 // 🔥 2. IMPORTA DONDE TENGAS EL PROVIDER DE 'TODOS LOS ESTABLECIMIENTOS'
 // Si lo dejaste en admin_products_screen.dart, importa ese archivo.
 // Si lo moviste a admin_products_providers.dart, importa ese.
@@ -83,7 +83,7 @@ class AdminProductDetailScreen extends ConsumerWidget {
                         BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
                           child: Container(
-                            color: Colors.black.withOpacity(0.5), // Oscurece para contraste
+                            color: Colors.black.withValues(alpha: 0.5), // Oscurece para contraste
                           ),
                         ),
                         // B. FOTO NÍTIDA CENTRAL
@@ -226,7 +226,7 @@ class AdminProductDetailScreen extends ConsumerWidget {
                                   child: Image.network(
                                     establishment.coverImage!, 
                                     fit: BoxFit.contain, // También arreglamos esta miniatura
-                                    errorBuilder: (_,__,___) => const Icon(Icons.broken_image, color: Colors.grey),
+                                    errorBuilder: (_,_,_) => const Icon(Icons.broken_image, color: Colors.grey),
                                   )
                                 )
                               : const Icon(Icons.store, color: Colors.blue),

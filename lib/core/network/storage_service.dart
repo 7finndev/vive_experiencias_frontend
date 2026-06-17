@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart'; // Para kIsWeb
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
 
 part 'storage_service.g.dart';
 
@@ -43,7 +44,7 @@ class StorageService {
       return imageUrl;
 
     } catch (e) {
-      print("❌ Error subiendo imagen al bucket $bucketName: $e");
+      Logger.error("❌ Error subiendo imagen al bucket $bucketName: $e", "STORAGE_SERVICE");
       return null;
     }
   }

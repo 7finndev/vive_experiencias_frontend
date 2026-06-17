@@ -1,9 +1,12 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vive_core/core/utils/logger_service.dart'; 
 
-// Importa tu modelo de Evento
-import 'package:torre_del_mar_app/features/home/data/models/event_model.dart';
+import 'package:vive_core/features/home/data/models/event_model.dart';
+import 'package:vive_core/core/constants/app_data.dart'; // NUEVO: URL de FastAPI
 
 part 'dashboard_repository.g.dart';
 
@@ -13,16 +16,12 @@ class DashboardStats {
   final int activeProducts;
   final int activeEstablishments;
   final Map<String, int> languages; 
-
-  // --- CAMPOS PARA EL GRÁFICO ---
-  final int countProducts; // Tapas/Gastro
-  final int countDrinks;   // Cócteles
-  final int countShopping; // Tiendas
-
-  // --- CAMPOS TECNOLOGÍAS ---
+  final int countProducts; 
+  final int countDrinks;   
+  final int countShopping; 
   final int deviceAndroid;
   final int deviceIOS;
-  final int deviceDesktop; // <--- ¡NUEVO CAMPO!
+  final int deviceDesktop; 
   final int deviceWeb;
 
   DashboardStats({
@@ -35,147 +34,71 @@ class DashboardStats {
     required this.countShopping,
     required this.deviceAndroid,
     required this.deviceIOS,
-    required this.deviceDesktop, // <--- AÑADIDO
+    required this.deviceDesktop, 
     required this.deviceWeb,
     required this.languages,
   });
+
+  // NUEVO: Factory para crear el objeto desde el JSON que manda FastAPI
+  factory DashboardStats.fromJson(Map<String, dynamic> json) {
+    return DashboardStats(
+      totalScans: json['totalScans'] ?? 0,
+      totalUsers: json['totalUsers'] ?? 0,
+      activeProducts: json['activeProducts'] ?? 0,
+      activeEstablishments: json['activeEstablishments'] ?? 0,
+      countProducts: json['countProducts'] ?? 0,
+      countDrinks: json['countDrinks'] ?? 0,
+      countShopping: json['countShopping'] ?? 0,
+      deviceAndroid: json['deviceAndroid'] ?? 0,
+      deviceIOS: json['deviceIOS'] ?? 0,
+      deviceDesktop: json['deviceDesktop'] ?? 0,
+      deviceWeb: json['deviceWeb'] ?? 0,
+      languages: Map<String, int>.from(json['languages'] ?? {}),
+    );
+  }
 }
 
 class DashboardRepository {
-  final SupabaseClient _client;
-  DashboardRepository(this._client);
+  DashboardRepository();
 
   Future<DashboardStats> getStats({int? eventId}) async {
-    // 1. USUARIOS (Global)
-    final usersCount = await _client.from('profiles').count(CountOption.exact);
-
-    // 2. PRODUCTOS Y CATEGORÍAS
-    var query = _client.from('event_products').select('id, events(type)');
-
-    if (eventId != null) {
-      query = query.eq('event_id', eventId);
-    }
-
-    final List<dynamic> productsData = await query;
-
-    int products = 0;
-    int drinks = 0;
-    int shopping = 0;
-
-    for (var item in productsData) {
-      final eventData = item['events'] as Map<String, dynamic>?;
-      if (eventData != null) {
-        final type = (eventData['type'] as String? ?? '').toLowerCase();
-
-        if (type.contains('tapa') || type.contains('gastro')) {
-          products++;
-        } else if (type.contains('drink') ||
-            type.contains('coctel') ||
-            type.contains('cóctel')) {
-          drinks++;
-        } else if (type.contains('shop') ||
-            type.contains('tienda') ||
-            type.contains('comercio')) {
-          shopping++;
-        } else {
-           products++;
-        }
-      }
-    }
-
-    final totalProducts = products + drinks + shopping;
-
-    // 3. ESTABLECIMIENTOS
-    int establishmentsCount = 0;
-    
-    if (eventId != null) {
-      try {
-        // Consultamos la vista que me has confirmado que tiene datos
-        final List<dynamic> data = await _client
-            .from('event_establishments_view')
-            .select('id') // Solo traemos el ID para gastar pocos datos
-            .eq('event_id', eventId);
-
-        // Usamos un Set para asegurar que son ÚNICOS
-        // (Por si la vista devuelve varias filas para el mismo bar)
-        final uniqueIds = data.map((e) => e['id']).toSet();
-        
-        establishmentsCount = uniqueIds.length;
-        
-        print("✅ Socios (Vista): ${data.length} filas -> $establishmentsCount únicos");
-        
-      } catch (e) {
-        print("❌ Error leyendo la vista de establecimientos: $e");
-        establishmentsCount = 0;
-      }
-    } else {
-      // Global (Sin filtro)
-      try {
-        establishmentsCount = await _client
-            .from('establishments')
-            .count(CountOption.exact);
-      } catch (_) {
-        establishmentsCount = 0;
-      }
-    }
-
-    // 4. ESCANEOS
-    int scansCount = 0;
     try {
-      var scansQuery = _client.from('passport_entries').count(CountOption.exact);
-      if (eventId != null) scansQuery = scansQuery.eq('event_id', eventId);
-      scansCount = await scansQuery;
-    } catch (_) {
-      scansCount = 0;
-    }
+      // 1. EXTRAEMOS EL TOKEN DE SEGURIDAD
+      final token = Supabase.instance.client.auth.currentSession?.accessToken;
+      if (token == null) throw Exception('No hay sesión activa.');
 
-    // 5. CONSULTA DE DISPOSITIVOS (LÓGICA ACTUALIZADA 🔥)
-    Map<String, int> langMap = {};
-    int android = 0, ios = 0, web = 0, desktop = 0;
+      // 2. Montamos la URL
+      String urlString = '${AppData.apiUrl}/api/v1/admin/dashboard';
+      if (eventId != null) {
+        urlString += '?event_id=$eventId';
+      }
 
-    try {
-      final List<dynamic> analyticsData = await _client
-          .from('analytics_devices')
-          .select('os, locale'); 
+      Logger.info('📊 Pidiendo estadísticas a FastAPI: $urlString', 'DASHBOARD_REPOSITORY');
+      final url = Uri.parse(urlString);
+      
+      // 3. ENVIAMOS LA PETICIÓN CON EL TOKEN EN LA CABECERA
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token', // 🔥 EL PASAPORTE DEL USUARIO
+        },
+      );
 
-      for (var item in analyticsData) {
-        // A. Contar OS
-        final String os = (item['os'] ?? '').toString().toLowerCase().trim();
-
-        if (os == 'android') {
-          android++;
-        } else if (os == 'ios') {
-          ios++;
-        } else if (os == 'windows' || os == 'macos' || os == 'linux') {
-          desktop++; // <--- AGRUPAMOS ORDENADORES
-        } else {
-          web++; // Resto (web generica, etc.)
-        }
-
-        // B. Contar Idiomas
-        final String code = item['locale'] ?? 'unknown';
-        if (code != 'unknown' && code.isNotEmpty) {
-           langMap[code] = (langMap[code] ?? 0) + 1;
-        }
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        return DashboardStats.fromJson(jsonResponse);
+      } else {
+        throw Exception('Error del servidor: ${response.statusCode}');
       }
     } catch (e) {
-      print("⚠️ Error leyendo Analytics: $e");
+      Logger.error("❌ Error cargando el dashboard B2B: $e", "DASHBOARD_REPOSITORY");
+      return DashboardStats(
+        totalScans: 0, totalUsers: 0, activeProducts: 0, activeEstablishments: 0,
+        countProducts: 0, countDrinks: 0, countShopping: 0, deviceAndroid: 0,
+        deviceIOS: 0, deviceDesktop: 0, deviceWeb: 0, languages: {},
+      );
     }
-
-    return DashboardStats(
-      totalScans: scansCount,
-      totalUsers: usersCount,
-      activeProducts: totalProducts,
-      activeEstablishments: establishmentsCount,
-      countProducts: products,
-      countDrinks: drinks,
-      countShopping: shopping,
-      deviceAndroid: android,
-      deviceIOS: ios,
-      deviceDesktop: desktop, // <--- PASAMOS EL VALOR
-      deviceWeb: web,
-      languages: langMap,
-    );
   }
 }
 
@@ -183,12 +106,10 @@ class DashboardRepository {
 
 @riverpod
 DashboardRepository dashboardRepository(DashboardRepositoryRef ref) {
-  return DashboardRepository(Supabase.instance.client);
+  return DashboardRepository(); // Ya no necesita Supabase directo
 }
 
-final dashboardSelectedEventProvider = StateProvider<EventModel?>(
-  (ref) => null,
-);
+final dashboardSelectedEventProvider = StateProvider<EventModel?>((ref) => null);
 
 @riverpod
 Future<DashboardStats> dashboardStats(DashboardStatsRef ref) async {

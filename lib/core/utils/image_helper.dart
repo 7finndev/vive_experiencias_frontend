@@ -6,6 +6,7 @@ library;
 import 'dart:typed_data';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
 
 class ImageHelper {
   static final ImagePicker _picker = ImagePicker();
@@ -47,20 +48,20 @@ class ImageHelper {
         final compressedSize = result.lengthInBytes / 1024;
         final savings = 100 - ((compressedSize / originalSize) * 100);
 
-        print("--------------------------------------------------");
-        print("📸 Imagen original: ${originalSize.toStringAsFixed(2)} KB");
-        print("📉 Imagen optimizada: ${compressedSize.toStringAsFixed(2)} KB");
-        print("💰 Ahorro: ${savings.toStringAsFixed(1)}%");
-        print("--------------------------------------------------");
+        Logger.info("--------------------------------------------------", "IMAGE_HELPER");
+        Logger.info("📸 Imagen original: ${originalSize.toStringAsFixed(2)} KB", "IMAGE_HELPER");
+        Logger.info("📉 Imagen optimizada: ${compressedSize.toStringAsFixed(2)} KB", "IMAGE_HELPER");
+        Logger.info("💰 Ahorro: ${savings.toStringAsFixed(1)}%", "IMAGE_HELPER");
+        Logger.info("--------------------------------------------------", "IMAGE_HELPER");
 
         return result;
       } catch (e) {
         // En algunos casos raros (o web antigua), si falla la compresión, devolvemos original
-        print("⚠️ Falló la compresión avanzada, usando original: $e");
+        Logger.warning("⚠️ Falló la compresión avanzada, usando original: $e", "IMAGE_HELPER");
         return bytes; 
       }
     } catch (e) {
-      print("Error en ImageHelper: $e");
+      Logger.error("Error en ImageHelper: $e", "IMAGE_HELPER");
       return null;
     }
   }

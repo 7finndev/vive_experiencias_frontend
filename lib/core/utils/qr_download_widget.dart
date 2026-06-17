@@ -3,8 +3,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart'; 
 import 'package:qr_flutter/qr_flutter.dart';
-// 1. CAMBIO IMPORTANTE: Usamos file_saver en lugar de dart:io + file_selector
-import 'package:file_saver/file_saver.dart'; 
+import 'package:file_saver/file_saver.dart';
+import 'package:vive_core/core/utils/logger_service.dart'; 
 
 class QrDownloadSection extends StatelessWidget {
   final String dataContent;
@@ -66,7 +66,7 @@ class QrDownloadSection extends StatelessWidget {
         }
       }
     } catch (e) {
-      print("Error guardando QR: $e"); // Para ver el error real en consola
+      Logger.error("Error guardando QR: $e", "QR_DOWNLOAD_WIDGET");
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error al guardar la imagen'), backgroundColor: Colors.red),

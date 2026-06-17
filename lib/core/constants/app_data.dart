@@ -1,4 +1,7 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class AppData {
+  // Patrocinadores estáticos del MVP
   static const List<Map<String, String>> sponsors = [
     {
       "name": "ACET",
@@ -16,13 +19,20 @@ class AppData {
       "url": "https://www.cervezavictoria.es/",
     },
      {
-      "name": "APTA Axarquia Costa del Sol",
-      "logo":
-          "https://www.axarquiacostadelsol.es/wp-content/uploads/2022/06/LogoLineaNegra.png",
+      "name": "APTA Axarquía Costa del Sol",
+      "logo": "https://www.axarquiacostadelsol.es/wp-content/uploads/2022/06/LogoLineaNegra.png",
       "url": "https://axarquiacostadelsol.es/",
     },
   ];
 
-  //Distancia máxima para validar el QR (en metros):
+  // Distancia máxima para validar el QR (en metros):
   static const double maxQrDistance = 150.0;
+
+  // 🔥 MAGIA DE LA MARCA BLANCA 🔥
+  // Si falla el archivo .env, por defecto cargará la ciudad 1 (Torre del Mar)
+  static int get cityId => int.tryParse(dotenv.env['CITY_ID'] ?? '1') ?? 1;
+  
+  // 🚀 URL DE PRODUCCIÓN BLINDADA 🚀
+  // Si el .env no carga correctamente en el móvil, apuntará siempre a tu servidor Xeon
+  static String get apiUrl => dotenv.env['API_URL'] ?? 'https://api.7finn.es';
 }

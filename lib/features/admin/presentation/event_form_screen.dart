@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart'; // <--- NECESARIO
 import 'package:image_picker/image_picker.dart'; // <--- USAMOS EL PAQUETE ESTÁNDAR
-import 'package:torre_del_mar_app/core/utils/image_helper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vive_core/core/utils/image_helper.dart';
 import 'package:uuid/uuid.dart'; // Para generar nombres de archivo
-import 'package:torre_del_mar_app/features/home/data/models/event_model.dart';
-import 'package:torre_del_mar_app/features/home/data/repositories/event_repository.dart';
+import 'package:vive_core/features/home/data/models/event_model.dart';
+import 'package:vive_core/features/home/data/repositories/event_repository.dart';
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
 
 // LISTA CURADA DE FUENTES DE GOOGLE (Para no saturar al usuario)
 const List<String> _googleFontsList = [
@@ -415,9 +417,14 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
   }
   */
   // WIDGET AUXILIAR PARA SELECCIONAR IMAGEN
-  Widget _buildImagePickerZone(String title, bool isLogo, Uint8List? newBytes, String currentUrl) {
+  Widget _buildImagePickerZone(
+    String title,
+    bool isLogo,
+    Uint8List? newBytes,
+    String currentUrl,
+  ) {
     // Texto de ayuda dinámico según el tipo
-    final helperText = isLogo 
+    final helperText = isLogo
         ? "💡 Recomendado: Logo cuadrado (300x300 px), Calidad 80%."
         : "💡 Recomendado: Fondo panorámico (1280x720 px), Calidad 75%.";
 
@@ -444,35 +451,46 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                   child: Image.memory(newBytes, fit: fitType),
                 )
               : (currentUrl.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      // Muestra la imagen que viene de la base de datos (si existe)
-                      child: Image.network(
-                        currentUrl, 
-                        fit: fitType,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(child: Icon(Icons.broken_image, color: Colors.grey));
-                        },
-                      ),
-                    )
-                  : Center(
-                      child: Icon(
-                        isLogo ? Icons.emoji_events : Icons.image, 
-                        size: 40, 
-                        color: Colors.grey
-                      ),
-                    )),
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        // Muestra la imagen que viene de la base de datos (si existe)
+                        child: Image.network(
+                          currentUrl,
+                          fit: fitType,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Center(
+                              child: Icon(
+                                Icons.broken_image,
+                                color: Colors.grey,
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    : Center(
+                        child: Icon(
+                          isLogo ? Icons.emoji_events : Icons.image,
+                          size: 40,
+                          color: Colors.grey,
+                        ),
+                      )),
         ),
         const SizedBox(height: 5),
         ElevatedButton.icon(
           onPressed: () => _pickImage(isLogo),
           icon: const Icon(Icons.upload_file, size: 18),
-          label: Text(newBytes != null ? "Cambiar Selección" : "Seleccionar Imagen"),
+          label: Text(
+            newBytes != null ? "Cambiar Selección" : "Seleccionar Imagen",
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           helperText,
-          style: const TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
+          style: const TextStyle(
+            fontSize: 11,
+            color: Colors.grey,
+            fontStyle: FontStyle.italic,
+          ),
         ),
       ],
     );
@@ -542,15 +560,15 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
         );
       },
     );
-    if (picked != null)
+    if (picked != null) {
       setState(() => isStart ? _startDate = picked : _endDate = picked);
+    }
   }
 
   Future<void> _saveEvent() async {
     if (!_formKey.currentState!.validate()) return;
 
     // --- VALIDACIÓN DE FECHAS ---
-    // Si la fecha de fin es ANTES que la de inicio, mostramos error y paramos.
     if (_endDate.isBefore(_startDate)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -558,9 +576,8 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
           backgroundColor: Colors.red,
         ),
       );
-      return; // DETENEMOS EL GUARDADO
+      return;
     }
-    // ----------------------------------
 
     setState(() => _isLoading = true);
 
@@ -569,6 +586,16 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
       final generatedSlug = _generateSlug(_nameController.text);
       final price = double.tryParse(_priceController.text) ?? 0.0;
 
+      // 🔥 1. OBTENER LA CIUDAD REAL DEL ADMIN AUTENTICADO
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+      final profile = await supabase
+          .from('profiles')
+          .select('city_id')
+          .eq('id', user!.id)
+          .single();
+      final adminCityId = profile['city_id'];
+
       String? finalLogoUrl = _logoUrlController.text.isNotEmpty
           ? _logoUrlController.text
           : null;
@@ -576,18 +603,16 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
           ? _bgImageUrlController.text
           : null;
 
-      // 1. GESTIÓN LOGO (Borrar viejo y subir nuevo)
+      // 2. GESTIÓN LOGO
       if (_newLogoBytes != null) {
-        //Si editamos y ya habia logo, lo borramos:
         if (widget.eventToEdit != null && widget.eventToEdit!.logoUrl != null) {
           await repo.deleteEventImage(widget.eventToEdit!.logoUrl!);
         }
-
         final name = 'logo_${const Uuid().v4()}.jpg';
         finalLogoUrl = await repo.uploadEventImage(name, _newLogoBytes!);
       }
 
-      // 2. GESTIÓN FONDO (Borrar viejo y subir nuevo):
+      // 3. GESTIÓN FONDO
       if (_newBgBytes != null) {
         if (widget.eventToEdit != null &&
             widget.eventToEdit!.bgImageUrl != null) {
@@ -597,15 +622,17 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
         finalBgUrl = await repo.uploadEventImage(name, _newBgBytes!);
       }
 
+      // 4. CONSTRUCCIÓN BLINDADA DEL EVENTO
       final newEvent = EventModel(
         id: widget.eventToEdit?.id ?? 0,
+        cityId: adminCityId, // 🔥 INYECCIÓN DE SEGURIDAD B2B
         name: _nameController.text,
         slug: generatedSlug,
         themeColorHex: _themeColorController.text,
         bgColorHex: _bgColorController.text,
         navColorHex: _navColorController.text,
         textColorHex: _textColorController.text,
-        fontFamily: _selectedFont, // GUARDAMOS LA SELECCIÓN
+        fontFamily: _selectedFont,
         type: _selectedType,
         status: _selectedStatus,
         startDate: _startDate,
@@ -622,16 +649,18 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
       }
 
       if (mounted) {
-        ref.refresh(adminEventsListProvider);
-        Navigator.pop(context, true);
+        // Usa ref.invalidate para forzar la recarga de los proveedores afectados
+        ref.invalidate(
+          adminEventsListProvider,
+        ); // 🔥 Corregido al provider correcto        Navigator.pop(context, true);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text("✅ Evento Guardado")));
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

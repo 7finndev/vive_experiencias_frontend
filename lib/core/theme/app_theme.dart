@@ -11,11 +11,9 @@ class AppTheme {
       colorScheme: colorScheme,
       
       // 1. FUENTE GLOBAL (Cuerpo de texto, botones, inputs...)
-      // Lato es muy legible y limpia para lectura en móvil y paneles.
       textTheme: GoogleFonts.latoTextTheme(),
       
       // 2. FUENTE PARA TÍTULOS (AppBar)
-      // Montserrat es más geométrica y moderna, queda genial en encabezados.
       appBarTheme: AppBarTheme(
         centerTitle: true, // Centramos títulos por defecto (estilo moderno)
         backgroundColor: colorScheme.primary, // Fondo naranja
@@ -28,8 +26,7 @@ class AppTheme {
         ),
       ),
       
-      // 3. MEJORA OPCIONAL: ESTILO DE BOTONES
-      // Para que los botones se vean más sólidos y modernos
+      // 3. ESTILO DE BOTONES
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           textStyle: GoogleFonts.montserrat(fontWeight: FontWeight.bold),

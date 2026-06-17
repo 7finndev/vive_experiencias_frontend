@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:torre_del_mar_app/core/local_storage/local_db_service.dart';
-import 'package:torre_del_mar_app/core/utils/analytics_service.dart';
-import 'package:torre_del_mar_app/core/widgets/web_container.dart'; // Usamos WebContainer
-import 'package:torre_del_mar_app/features/auth/presentation/providers/auth_provider.dart';
-import 'package:torre_del_mar_app/main.dart';
+import 'package:vive_core/core/local_storage/local_db_service.dart';
+import 'package:vive_core/core/utils/analytics_service.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
+import 'package:vive_core/core/widgets/web_container.dart'; // Usamos WebContainer
+import 'package:vive_core/features/auth/presentation/providers/auth_provider.dart';
+import 'package:vive_core/main.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -27,12 +28,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   // Variables para Magic Link (Conservadas por si acaso, pero sin uso visual actual)
   // bool _emailSent = false;
 
-  late final StreamSubscription<AuthState> _authSubscription;
+//  late final StreamSubscription<AuthState> _authSubscription;
 
   @override
   void initState() {
     super.initState();
 
+/*
     _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
       data,
     ) {
@@ -47,13 +49,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
       }
     });
+*/
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _authSubscription.cancel();
+//    _authSubscription.cancel();
     super.dispose();
   }
 
@@ -81,9 +84,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         final localDb = ref.read(localDbServiceProvider);
         //Volvemos a registrar el dispositivo, ahora que Supabase tiene la sesión
         await AnalyticsService.trackDeviceStart(localDb, forceUserId: userId);
-        print("📊 Analytics actualizado con User ID");
+        Logger.info("📊 Analytics actualizado con User ID", "LOGIN_SCREEN");
       }catch(e){
-        print("⚠️ Error actualizando analytics post-login: $e");
+        Logger.error("⚠️ Error actualizando analytics post-login: $e", "LOGIN_SCREEN");
       }
 
       // El listener de authState se encargará de redirigir

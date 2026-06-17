@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:torre_del_mar_app/core/widgets/error_view.dart';
-// import 'package:torre_del_mar_app/core/widgets/version_tag.dart'; // No hace falta aquí, irá en el Shell
-import 'package:torre_del_mar_app/features/admin/data/dashboard_repository.dart';
-import 'package:torre_del_mar_app/features/home/data/models/event_model.dart';
-import 'package:torre_del_mar_app/features/home/data/repositories/event_repository.dart';
+import 'package:vive_core/core/widgets/error_view.dart';
+// import 'package:vive_core/core/widgets/version_tag.dart'; // No hace falta aquí, irá en el Shell
+import 'package:vive_core/features/admin/data/dashboard_repository.dart';
+import 'package:vive_core/features/home/data/models/event_model.dart';
 
 import 'package:go_router/go_router.dart';
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -94,7 +94,7 @@ class AdminDashboardScreen extends ConsumerWidget {
       decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
       child: eventsAsync.when(
         loading: () => const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-        error: (_, __) => const Text("Error"),
+        error: (_, _) => const Text("Error"),
         data: (events) {
           EventModel? value = selectedEvent;
           if (value != null && !events.any((e) => e.id == value?.id)) value = null;
@@ -276,7 +276,7 @@ class _ChartsTabState extends State<_ChartsTab> {
             children: [
               Container(
                 padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
                 child: Column(
                   children: [
                     const Text("Oferta Gastronómica", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -387,7 +387,7 @@ class _DevicesTab extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white, 
             borderRadius: BorderRadius.circular(16), 
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,10 +477,10 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: color.withOpacity(0.4), blurRadius: 6, offset: const Offset(0, 3))]),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 6, offset: const Offset(0, 3))]),
       child: Stack(
         children: [
-          Positioned(right: -10, top: -10, child: Icon(icon, size: 60, color: Colors.white.withOpacity(0.2))),
+          Positioned(right: -10, top: -10, child: Icon(icon, size: 60, color: Colors.white.withValues(alpha: 0.2))),
           Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Icon(icon, color: Colors.white, size: 20), Column(crossAxisAlignment: CrossAxisAlignment.start, children: [FittedBox(fit: BoxFit.scaleDown, child: Text(value, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold))), Text(title, style: const TextStyle(color: Colors.white, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis)])])
         ],
       )
@@ -537,7 +537,7 @@ class _ActionCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: color, size: 28),

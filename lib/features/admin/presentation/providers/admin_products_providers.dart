@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
-import 'package:torre_del_mar_app/features/home/data/models/event_model.dart';
-import 'package:torre_del_mar_app/features/home/data/models/product_model.dart';
-import 'package:torre_del_mar_app/features/home/data/repositories/establishment_repository.dart';
-import 'package:torre_del_mar_app/features/home/data/repositories/product_repository.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/features/home/data/models/event_model.dart';
+import 'package:vive_core/features/home/data/models/product_model.dart';
+import 'package:vive_core/features/home/data/repositories/establishment_repository.dart';
+import 'package:vive_core/features/home/data/repositories/product_repository.dart';
 
 
 // 1. Estado del filtro: ¿Qué evento tenemos seleccionado en el dropdown?

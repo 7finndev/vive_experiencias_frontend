@@ -6,13 +6,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 
 // WIDGETS Y UTILS
-import 'package:torre_del_mar_app/core/widgets/web_container.dart';
-import 'package:torre_del_mar_app/core/utils/image_helper.dart';
+import 'package:vive_core/core/widgets/web_container.dart';
+import 'package:vive_core/core/utils/image_helper.dart';
 
 // PROVIDERS Y REPOSITORIOS
-import 'package:torre_del_mar_app/features/auth/presentation/providers/auth_provider.dart';
-import 'package:torre_del_mar_app/features/scan/data/repositories/passport_repository.dart';
-import 'package:torre_del_mar_app/features/scan/presentation/providers/sync_provider.dart';
+import 'package:vive_core/features/auth/presentation/providers/auth_provider.dart';
+import 'package:vive_core/features/scan/data/repositories/passport_repository.dart';
+import 'package:vive_core/features/scan/presentation/providers/sync_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final int? eventId;
@@ -306,7 +306,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ? Image(
                     image: imageProvider,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Center(
+                    errorBuilder: (_, _, _) => const Center(
                         child: Icon(Icons.broken_image, size: 50, color: Colors.grey)),
                   )
                 : const Center(
@@ -325,6 +325,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               bottom: 15,
               right: 15,
               child: FloatingActionButton(
+                heroTag: 'fab_pick_image', // Evita conflictos si hay varios FAB
                 onPressed: _pickImage,
                 backgroundColor: Colors.blue,
                 child: const Icon(Icons.camera_alt, color: Colors.white),
@@ -438,13 +439,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Sincronizando... ☁️")));
                 try {
                   await ref.read(syncServiceProvider).syncPendingVotes(targetEventId: widget.eventId!);
-                  if (mounted)
+                  if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("¡Sincronizado! ✅"), backgroundColor: Colors.green));
+                  }
                 } catch (e) {
-                  if (mounted)
+                  if (mounted) {
                     ScaffoldMessenger.of(context)
                         .showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(

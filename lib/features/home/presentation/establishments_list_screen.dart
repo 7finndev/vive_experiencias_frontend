@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:torre_del_mar_app/features/home/presentation/providers/home_providers.dart';
-import 'package:torre_del_mar_app/features/home/presentation/providers/ranking_provider.dart';
-import 'package:torre_del_mar_app/features/home/presentation/widgets/establishment_card.dart';
-import 'package:torre_del_mar_app/core/widgets/error_view.dart'; // <--- IMPORTA ESTO
+import 'package:vive_core/features/home/presentation/providers/home_providers.dart';
+import 'package:vive_core/features/home/presentation/providers/ranking_provider.dart';
+import 'package:vive_core/features/home/presentation/widgets/establishment_card.dart';
+import 'package:vive_core/core/widgets/error_view.dart'; // <--- IMPORTA ESTO
 
 class EstablishmentsListScreen extends ConsumerStatefulWidget {
   final int eventId;

@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:vive_core/core/utils/logger_service.dart';
 
 class GeocodingHelper {
   /// Devuelve [lat, lng] o null si falla
   static Future<List<double>?> getCoordinatesFromAddress(String address) async {
     try {
-      // Truco: Añadimos ", Torre del Mar, España" para mejorar la precisión
+      // Añadimos ", Torre del Mar, España" para mejorar la precisión
       // si el usuario solo escribe la calle.
       final query = "$address, Torre del Mar, Málaga, España";
       
@@ -27,11 +28,11 @@ class GeocodingHelper {
         }
       }
     } catch (e) {
-      print("Error geocoding: $e");
+      Logger.error("Error geocoding: $e", "GEOCODING_HELPER");
     }
     return null;
   }
-// NUEVA FUNCIÓN: Obtener dirección desde coordenadas (Reverse Geocoding)
+// Obtener dirección desde coordenadas (Reverse Geocoding)
   static Future<String?> getAddressFromCoordinates(double lat, double lng) async {
     try {
       final url = Uri.parse(
@@ -60,7 +61,7 @@ class GeocodingHelper {
         }
       }
     } catch (e) {
-      print("Error Reverse Geocoding: $e");
+      Logger.error("Error Reverse Geocoding: $e", "GEOCODING_HELPER");
     }
     return null;
   }

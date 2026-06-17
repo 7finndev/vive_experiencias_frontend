@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:torre_del_mar_app/core/utils/smart_image_container.dart';
-import 'package:torre_del_mar_app/features/map/presentation/providers/navigation_provider.dart';
-import 'package:torre_del_mar_app/features/home/presentation/providers/nearest_bar_provider.dart'; 
+import 'package:vive_core/core/utils/smart_image_container.dart';
+import 'package:vive_core/features/map/presentation/providers/navigation_provider.dart';
+import 'package:vive_core/features/home/presentation/providers/nearest_bar_provider.dart'; 
 
 class NextStopCard extends ConsumerWidget {
   final int eventId;

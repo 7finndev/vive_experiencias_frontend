@@ -3,8 +3,9 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // <--- IMPORTANTE
-import 'package:torre_del_mar_app/core/constants/app_data.dart';
-import 'package:torre_del_mar_app/features/home/data/models/establishment_model.dart';
+import 'package:vive_core/core/constants/app_data.dart';
+import 'package:vive_core/core/utils/logger_service.dart';
+import 'package:vive_core/features/home/data/models/establishment_model.dart';
 
 class ScanQrScreen extends StatefulWidget {
   final EstablishmentModel establishment;
@@ -83,7 +84,7 @@ class _ScanQrScreenState extends State<ScanQrScreen> with WidgetsBindingObserver
           widget.establishment.longitude!,
         );
 
-        debugPrint("Distancia GPS: $distanceInMeters m");
+        Logger.info("Distancia GPS: $distanceInMeters m", "SCAN_QR_SCREEN");
 
         // Aqui se establece el margen de distancia que debe estar el usuario con respecto al establecimiento
         // para realizar una votación de manera correcta. Distancia entre 100 y 300 metros, es lo adecuado.
@@ -275,7 +276,7 @@ class _ScanQrScreenState extends State<ScanQrScreen> with WidgetsBindingObserver
               try{
                 controller.switchCamera();
               }catch(e){
-                debugPrint("Error cambiando cámara: $e");
+                Logger.error("Error cambiando cámara: $e", "SCAN_QR_SCREEN");
               }
             },
           ),

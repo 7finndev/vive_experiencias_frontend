@@ -4,7 +4,7 @@ import 'package:json_annotation/json_annotation.dart';
 part 'event_model.g.dart';
 
 @JsonSerializable()
-@HiveType(typeId: 1) // Mantenemos tu ID 1
+@HiveType(typeId: 1) 
 class EventModel extends HiveObject {
   @HiveField(0)
   final int id;
@@ -20,21 +20,10 @@ class EventModel extends HiveObject {
   @JsonKey(name: 'status', defaultValue: 'archived')
   final String status;
 
-  // GETTER INTELIGENTE
   String get computedStatus {
     final now = DateTime.now();
-
-    // Si la fecha actual es ANTES del inicio -> 'upcoming'
-    if (now.isBefore(startDate)) {
-      return 'upcoming';
-    }
-
-    // Si la fecha actual es DESPUÉS del fin -> 'archived'
-    if (now.isAfter(endDate)) {
-      return 'archived';
-    }
-
-    // Si estamos en medio -> 'active'
+    if (now.isBefore(startDate)) return 'upcoming';
+    if (now.isAfter(endDate)) return 'archived';
     return 'active';
   }
 
@@ -66,27 +55,27 @@ class EventModel extends HiveObject {
   @JsonKey(defaultValue: '')
   final String slug;
 
-  // --- NUEVOS CAMPOS DE DISEÑO (Índices 11-14) ---
-
   @HiveField(11)
   @JsonKey(name: 'bg_color')
-  final String? bgColorHex; // Color de fondo de la app
+  final String? bgColorHex; 
 
   @HiveField(12)
   @JsonKey(name: 'nav_color')
-  final String? navColorHex; // Color de la barra de navegación
+  final String? navColorHex; 
 
   @HiveField(13)
   @JsonKey(name: 'text_color')
-  final String? textColorHex; // Color principal del texto
+  final String? textColorHex; 
 
   @HiveField(14)
   @JsonKey(name: 'font_family')
-  final String? fontFamily; // Nombre de la fuente (ej: 'Roboto')
+  final String? fontFamily; 
 
-  // ------------------------------------------------
+  // 🔥 NUEVO CAMPO: Para la seguridad B2B de FastAPI
+  @HiveField(15)
+  @JsonKey(name: 'city_id')
+  final int? cityId; 
 
-  // Helper Visual
   bool get isActive => computedStatus == 'active';
 
   EventModel({
@@ -101,11 +90,11 @@ class EventModel extends HiveObject {
     this.logoUrl,
     this.bgImageUrl,
     this.basePrice,
-    // Añadimos los nuevos al constructor (opcionales)
     this.bgColorHex,
     this.navColorHex,
     this.textColorHex,
     this.fontFamily,
+    this.cityId, // 🔥 Añadido al constructor
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) =>

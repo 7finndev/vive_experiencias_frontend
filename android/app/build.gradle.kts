@@ -5,7 +5,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
-    id("com.google.gms.google-services") // <--- ¡ESTO FALTABA PARA FIREBASE!
+    // id("com.google.gms.google-services") // <--- ¡ESTO FALTABA PARA FIREBASE!
 }
 
 // Carga de propiedades segura
@@ -16,7 +16,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "es.sietefinn.appvivetorredelmar" // <--- TU NUEVO ID
+    namespace = "es.sevenfinn.viverutas" // <--- ACTUALÍZALO
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -30,7 +30,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "es.sietefinn.appvivetorredelmar" // <--- TU NUEVO ID
+        applicationId = "es.sevenfinn.viverutas"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

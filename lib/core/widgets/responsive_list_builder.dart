@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ResponsiveListBuilder extends StatelessWidget {
   final int itemCount;
   final Widget Function(BuildContext, int) itemBuilder;
-  final double minItemWidth; // ¿Cuánto debe medir de ancho mínimo cada tarjeta?
+  final double minItemWidth; 
   final EdgeInsetsGeometry? padding;
 
   const ResponsiveListBuilder({
